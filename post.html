@@ -12,88 +12,114 @@
         h1, h2, h3 { font-family: 'Lora', serif; }
         .prose { max-width: 65ch; margin-left: auto; margin-right: auto; }
         .prose h1 { font-size: 2.25rem; line-height: 2.5rem; }
-        .prose p { margin-bottom: 1.25em; line-height: 1.75; }
-        .prose ul, .prose ol { padding-left: 1.5rem; margin-bottom: 1.25em; }
-        .prose strong { font-weight: 700; }
-        .prose a { color: #10B981; text-decoration: underline; }
+        .prose p, .prose ul, .prose ol { line-height: 1.75; }
+        .form-input { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased">
-    <!-- Header -->
-    <header class="bg-white/90 backdrop-blur-lg shadow-sm">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-extrabold text-slate-900 tracking-tight">Shifat S. Siam</a>
-            <a href="index.html#blog" class="font-bold text-emerald-600 hover:text-emerald-700">&larr; Back to All Articles</a>
-        </nav>
-    </header>
+    <header class="bg-white/90 backdrop-blur-lg shadow-sm"><nav class="container mx-auto px-6 py-4 flex justify-between items-center"><a href="index.html" class="text-2xl font-extrabold text-slate-900 tracking-tight">Shifat S. Siam</a><a href="index.html#blog" class="font-bold text-emerald-600 hover:text-emerald-700">&larr; Back to All Articles</a></nav></header>
 
-    <!-- Main Content for Single Post -->
     <main id="post-container" class="container mx-auto px-6 py-12 md:py-20">
-        <div id="loading-post" class="text-center text-slate-500">
-            <i class="fas fa-spinner fa-spin text-3xl"></i>
-            <p class="mt-2">Loading article...</p>
-        </div>
-        <!-- The full post will be injected here by the script -->
+        <div id="loading-post" class="text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl"></i><p class="mt-2">Loading article...</p></div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-400 text-sm mt-16">
-        <div class="container mx-auto text-center p-6">
-            <p>&copy; 2025 Shifat Shahriar Siam. All Rights Reserved.</p>
-        </div>
-    </footer>
+    <footer class="bg-slate-900 text-slate-400 text-sm mt-16"><div class="container mx-auto text-center p-6"><p>&copy; 2025 Shifat Shahriar Siam. All Rights Reserved.</p></div></footer>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyDJ-sfeQt1lfCs3eOp8itVLqJjtrZGd1oM",
-        authDomain: "shifat-siam-website.firebaseapp.com",
-        projectId: "shifat-siam-website",
-        storageBucket: "shifat-siam-website.appspot.com",
-        messagingSenderId: "888645046287",
-        appId: "1:888645046287:web:fc40862194cb3d934e937a"
-      };
-
+      const firebaseConfig = { apiKey: "AIzaSyDJ-sfeQt1lfCs3eOp8itVLqJjtrZGd1oM", authDomain: "shifat-siam-website.firebaseapp.com", projectId: "shifat-siam-website", storageBucket: "shifat-siam-website.appspot.com", messagingSenderId: "888645046287", appId: "1:888645046287:web:fc40862194cb3d934e937a" };
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
       const postContainer = document.getElementById('post-container');
       const loadingMessage = document.getElementById('loading-post');
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get('id');
 
       async function loadPost() {
-          const urlParams = new URLSearchParams(window.location.search);
-          const postId = urlParams.get('id');
-
-          if (!postId) {
-              loadingMessage.innerHTML = `<div class="text-center"><h1 class="text-3xl font-bold text-red-500">Error</h1><p>No post ID provided in the URL.</p></div>`;
-              return;
-          }
-
+          if (!postId) { loadingMessage.innerHTML = `<div class="text-center"><h1 class="text-3xl font-bold text-red-500">Error</h1><p>No post ID provided.</p></div>`; return; }
+          const docRef = db.collection('posts').doc(postId);
           try {
-              const docRef = db.collection('posts').doc(postId);
+              // Increment view count
+              await docRef.update({ views: firebase.firestore.FieldValue.increment(1) });
               const docSnap = await docRef.get();
 
               if (docSnap.exists) {
                   const post = docSnap.data();
                   document.title = `${post.title} | Shifat S. Siam`;
+                  const date = post.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
                   
+                  const votedPosts = JSON.parse(localStorage.getItem('voted_posts')) || {};
+                  const hasVoted = votedPosts[postId];
+
                   loadingMessage.style.display = 'none';
                   postContainer.innerHTML = `
                     <article class="prose bg-white p-8 md:p-12 rounded-lg shadow-lg">
-                        <h1 class="font-black text-slate-900 !mb-2">${post.title}</h1>
-                        <p class="text-slate-500 !mt-0">Published on ${post.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <h1 class="!text-4xl font-black text-slate-900 !mb-2">${post.title}</h1>
+                        <p class="text-slate-500 !mt-0">Published on ${date}</p>
+                        <div class="my-6 py-4 border-y flex justify-between items-center text-slate-500">
+                           <div class="flex items-center space-x-6">
+                                <button data-action="like" class="interaction-btn flex items-center space-x-1.5 hover:text-emerald-500" ${hasVoted ? 'disabled' : ''}><i class="far fa-thumbs-up"></i><span>${post.likes || 0}</span></button>
+                                <button data-action="dislike" class="interaction-btn flex items-center space-x-1.5 hover:text-red-500" ${hasVoted ? 'disabled' : ''}><i class="far fa-thumbs-down"></i><span>${post.dislikes || 0}</span></button>
+                           </div>
+                           <span class="flex items-center"><i class="far fa-eye mr-2"></i> ${post.views || 0} Views</span>
+                        </div>
                         ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Cover for ${post.title}" class="rounded-lg shadow-md my-8">` : ''}
                         <div class="prose-content">${post.content}</div>
                     </article>
+                    <div id="comments-section" class="max-w-3xl mx-auto mt-12"></div>
                   `;
-              } else {
-                  loadingMessage.innerHTML = `<div class="text-center"><h1 class="text-3xl font-bold text-red-500">Not Found</h1><p>Sorry, we couldn't find a post with that ID.</p></div>`;
-              }
-          } catch (error) {
-              console.error("Error fetching post:", error);
-              loadingMessage.innerHTML = `<div class="text-center"><h1 class="text-3xl font-bold text-red-500">Error</h1><p>Could not load the article. Please try again.</p></div>`;
-          }
+                  loadComments(postId);
+                  attachInteractionListeners(postId);
+              } else { /* Show not found error */ }
+          } catch (error) { console.error("Error loading post:", error); /* Show error */ }
+      }
+      
+      function attachInteractionListeners(postId) {
+          postContainer.addEventListener('click', (e) => {
+              const button = e.target.closest('.interaction-btn');
+              if (!button) return;
+              const votedPosts = JSON.parse(localStorage.getItem('voted_posts')) || {};
+              if (votedPosts[postId]) return;
+              const action = button.dataset.action;
+              const fieldToUpdate = action === 'like' ? 'likes' : 'dislikes';
+              db.collection('posts').doc(postId).update({ [fieldToUpdate]: firebase.firestore.FieldValue.increment(1) });
+              votedPosts[postId] = true;
+              localStorage.setItem('voted_posts', JSON.stringify(votedPosts));
+          });
+      }
+
+      function loadComments(postId) {
+          const commentsContainer = document.getElementById('comments-section');
+          commentsContainer.innerHTML = `
+            <div class="bg-white p-8 rounded-lg shadow-lg">
+                <h3 class="text-2xl font-bold mb-6">Comments</h3>
+                <form id="comment-form" class="space-y-4 mb-8">
+                    <input id="comment-name" type="text" class="form-input" placeholder="Your Name" required>
+                    <textarea id="comment-text" rows="4" class="form-input" placeholder="Write your comment..." required></textarea>
+                    <button type="submit" class="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700">Post Comment</button>
+                </form>
+                <div id="comments-list" class="space-y-6"></div>
+            </div>`;
+
+          db.collection('posts').doc(postId).collection('comments').orderBy('createdAt', 'desc')
+            .onSnapshot(snapshot => {
+                const list = document.getElementById('comments-list');
+                if (snapshot.empty) { list.innerHTML = '<p class="text-slate-500">No comments yet. Be the first!</p>'; return; }
+                list.innerHTML = snapshot.docs.map(doc => {
+                    const c = doc.data();
+                    const date = c.createdAt.toDate().toLocaleString();
+                    return `<div class="flex space-x-4"><div class="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-slate-500">${c.name.charAt(0)}</div><div><p class="font-bold">${c.name}</p><p class="text-xs text-slate-400 mb-1">${date}</p><p class="text-slate-600">${c.text.replace(/\n/g, '<br>')}</p></div></div>`;
+                }).join('');
+            });
+
+          document.getElementById('comment-form').addEventListener('submit', async e => {
+              e.preventDefault();
+              const nameInput = document.getElementById('comment-name'), textInput = document.getElementById('comment-text');
+              await db.collection('posts').doc(postId).collection('comments').add({ name: nameInput.value, text: textInput.value, createdAt: new Date() });
+              nameInput.value = ''; textInput.value = '';
+          });
       }
 
       loadPost();
