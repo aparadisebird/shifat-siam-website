@@ -76,7 +76,6 @@
                 <section id="page-blog" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Blog Management</h1>
                     
-                    <!-- Create New Post Form -->
                     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
                         <h2 class="text-2xl font-bold mb-4">Create New Post</h2>
                         <form id="blog-post-form" class="space-y-4">
@@ -90,7 +89,6 @@
                         </form>
                     </div>
 
-                    <!-- Existing Posts Table -->
                     <div class="bg-white p-6 rounded-lg shadow-md">
                         <h2 class="text-2xl font-bold mb-4">Published Posts</h2>
                         <div class="overflow-x-auto">
@@ -103,7 +101,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="posts-table-body">
-                                    <!-- Posts will be loaded here dynamically -->
                                     <tr><td colspan="3" class="text-center p-4 text-slate-500">Loading posts...</td></tr>
                                 </tbody>
                             </table>
@@ -111,13 +108,11 @@
                     </div>
                 </section>
 
-                <!-- Notes Store Section -->
                 <section id="page-notes" class="content-page hidden">
                      <h1 class="text-4xl font-bold text-slate-800 mb-6">Notes Store Management</h1>
                      <p class="text-slate-600">Functionality to add and manage paid notes is coming soon!</p>
                 </section>
 
-                <!-- Subscribers Section -->
                 <section id="page-subscribers" class="content-page hidden">
                      <h1 class="text-4xl font-bold text-slate-800 mb-6">Newsletter Subscribers</h1>
                      <p class="text-slate-600">Functionality to view and manage your subscribers is coming soon!</p>
@@ -134,7 +129,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
 
     <script>
-      // Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyDJ-sfeQt1lfCs3eOp8itVLqJjtrZGd1oM",
         authDomain: "shifat-siam-website.firebaseapp.com",
@@ -144,19 +138,16 @@
         appId: "1:888645046287:web:fc40862194cb3d934e937a"
       };
 
-      // Initialize Firebase
       const app = firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
 
-      // UI Elements
       const loginContainer = document.getElementById('login-container');
       const appLayout = document.getElementById('app-layout');
       const loginForm = document.getElementById('login-form');
       const errorMessage = document.getElementById('error-message');
       const signoutButton = document.getElementById('signout-button');
       
-      // --- Authentication Logic ---
       loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
@@ -173,7 +164,6 @@
         if (user) {
           loginContainer.style.display = 'none';
           appLayout.style.display = 'block';
-          // When user logs in, load the posts
           loadBlogPosts();
         } else {
           loginContainer.style.display = 'flex';
@@ -181,32 +171,27 @@
         }
       });
 
-      // --- Navigation Logic ---
       const pages = document.querySelectorAll('.content-page');
       const navLinks = document.querySelectorAll('.sidebar-link');
-
       navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
           e.preventDefault();
+          if (link.id === 'signout-button') return;
           const targetId = `page-${link.id.split('-')[1]}`;
-          
           pages.forEach(page => page.classList.add('hidden'));
           document.getElementById(targetId).classList.remove('hidden');
-          
           navLinks.forEach(nav => nav.classList.remove('active'));
           link.classList.add('active');
         });
       });
       
-      // --- Blog Post Management ---
       const blogPostForm = document.getElementById('blog-post-form');
-      const blogMessage = document.getElementById('blog-message');
-      const publishPostButton = document.getElementById('publish-post-button');
-
       blogPostForm.addEventListener('submit', async (e) => {
           e.preventDefault();
-          publishPostButton.disabled = true;
-          publishPostButton.textContent = 'Publishing...';
+          const publishButton = document.getElementById('publish-post-button');
+          const blogMessage = document.getElementById('blog-message');
+          publishButton.disabled = true;
+          publishButton.textContent = 'Publishing...';
           blogMessage.textContent = '';
 
           try {
@@ -221,41 +206,29 @@
               blogMessage.className = 'text-sm text-green-600';
               blogPostForm.reset();
           } catch (error) {
-              blogMessage.textContent = 'Error publishing post.';
+              blogMessage.textContent = 'Error: Could not publish post. Check permissions.';
               blogMessage.className = 'text-sm text-red-500';
-              console.error(error);
+              console.error("Error publishing post: ", error);
           } finally {
-              publishPostButton.disabled = false;
-              publishPostButton.textContent = 'Publish Post';
-              setTimeout(() => { blogMessage.textContent = ''; }, 3000);
+              publishButton.disabled = false;
+              publishButton.textContent = 'Publish Post';
+              setTimeout(() => { blogMessage.textContent = ''; }, 4000);
           }
       });
 
-      // --- Function to Load and Display Blog Posts ---
       function loadBlogPosts() {
           const postsTableBody = document.getElementById('posts-table-body');
-          
           db.collection('posts').orderBy('createdAt', 'desc')
             .onSnapshot(querySnapshot => {
               if (querySnapshot.empty) {
                   postsTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-slate-500">No posts found. Write your first one!</td></tr>`;
                   return;
               }
-              
               let html = '';
               querySnapshot.forEach(doc => {
                   const post = doc.data();
                   const date = post.createdAt ? post.createdAt.toDate().toLocaleDateString() : 'Just now';
-                  html += `
-                      <tr class="border-b border-slate-200 hover:bg-slate-50">
-                          <td class="p-3 font-medium text-slate-800">${post.title}</td>
-                          <td class="p-3 text-slate-600">${date}</td>
-                          <td class="p-3 space-x-2">
-                              <button class="btn btn-secondary text-sm">Edit</button>
-                              <button class="btn btn-danger text-sm">Delete</button>
-                          </td>
-                      </tr>
-                  `;
+                  html += `<tr class="border-b border-slate-200 hover:bg-slate-50"><td class="p-3 font-medium text-slate-800">${post.title}</td><td class="p-3 text-slate-600">${date}</td><td class="p-3 space-x-2"><button class="btn btn-secondary text-sm">Edit</button><button class="btn btn-danger text-sm">Delete</button></td></tr>`;
               });
               postsTableBody.innerHTML = html;
           }, error => {
