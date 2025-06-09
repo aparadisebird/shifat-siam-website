@@ -12,7 +12,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .form-input { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; transition: border-color 0.2s, box-shadow 0.2s; }
         .form-input:focus { outline: none; border-color: #10B981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5); }
-        .sidebar-link { display: flex; align-items: center; padding: 0.75rem 1.5rem; border-radius: 0.5rem; color: #cbd5e1; transition: background-color 0.2s, color 0.2s; }
+        .sidebar-link { display: flex; align-items: center; padding: 0.75rem 1.5rem; border-radius: 0.5rem; color: #cbd5e1; transition: background-color 0.2s, color 0.2s; cursor: pointer; }
         .sidebar-link:hover { background-color: #334155; color: white; }
         .sidebar-link.active { background-color: #10B981; color: white; }
         .sidebar-link i { width: 1.25rem; margin-right: 0.75rem; text-align: center; }
@@ -29,7 +29,15 @@
 
     <!-- Login Screen -->
     <div id="login-container" class="flex items-center justify-center min-h-screen bg-slate-100">
-        <!-- Login form remains the same -->
+        <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-lg shadow-xl">
+            <h2 class="text-3xl font-extrabold text-center text-slate-900">Admin Panel</h2>
+            <form id="login-form" class="space-y-6">
+                <input id="email" type="email" required class="form-input" placeholder="Email address">
+                <input id="password" type="password" required class="form-input" placeholder="Password">
+                <p id="error-message" class="text-red-500 text-sm h-4"></p>
+                <button type="submit" class="w-full btn btn-primary py-3">Sign in</button>
+            </form>
+        </div>
     </div>
 
     <!-- Main Dashboard Layout -->
@@ -37,53 +45,53 @@
         <div class="flex h-screen bg-slate-100">
             <!-- Sidebar -->
             <aside class="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0">
-                 <!-- Sidebar content remains the same -->
+                <div class="p-6 text-2xl font-bold border-b border-slate-700">Shifat S. Siam</div>
+                <nav class="flex-1 p-4 space-y-2">
+                    <a id="nav-dashboard" class="sidebar-link active"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
+                    <a id="nav-blog" class="sidebar-link"><i class="fas fa-pencil-alt"></i>Blog Posts</a>
+                    <a id="nav-notes" class="sidebar-link"><i class="fas fa-file-invoice-dollar"></i>Notes Store</a>
+                    <a id="nav-subscribers" class="sidebar-link"><i class="fas fa-users"></i>Subscribers</a>
+                </nav>
+                <div class="p-4 border-t border-slate-700">
+                    <button id="signout-button" class="sidebar-link w-full text-left"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+                </div>
             </aside>
 
             <!-- Main Content Area -->
             <main class="flex-1 overflow-y-auto p-8">
-                <!-- Blog Management Section -->
-                <section id="page-blog" class="content-page">
+                <section id="page-dashboard" class="content-page">
+                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Dashboard</h1>
+                     <p class="text-slate-600">Welcome! Use the sidebar to manage your content.</p>
+                </section>
+                <section id="page-blog" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Blog Management</h1>
-                    
                     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
                         <h2 id="form-title" class="text-2xl font-bold mb-4">Create New Post</h2>
                         <form id="blog-post-form" class="space-y-4">
                             <input type="hidden" id="post-id">
                             <input type="text" id="post-title" class="form-input" placeholder="Post Title" required>
-                            <input type="url" id="post-image-url" class="form-input" placeholder="Cover Image URL">
-                            <textarea id="post-content" class="form-input" placeholder="Write your content here..."></textarea>
+                            <input type="url" id="post-image-url" class="form-input" placeholder="Cover Image URL (optional)">
+                            <textarea id="post-content" class="form-input"></textarea>
                             <div class="flex justify-end space-x-2">
-                                <button type="button" id="cancel-edit-button" class="btn btn-secondary hidden">Cancel Edit</button>
+                                <button type="button" id="cancel-edit-button" class="btn bg-slate-500 text-white hidden">Cancel Edit</button>
                                 <button type="submit" id="publish-post-button" class="btn btn-primary">Publish Post</button>
                             </div>
                             <p id="blog-message" class="text-sm h-4 mt-2"></p>
                         </form>
                     </div>
-
                     <div class="bg-white p-6 rounded-lg shadow-md">
                         <h2 class="text-2xl font-bold mb-4">Published Posts</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="border-b-2 border-slate-200">
-                                    <tr>
-                                        <th class="p-3">Title</th>
-                                        <th class="p-3">Created At</th>
-                                        <th class="p-3 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="posts-table-body"></tbody>
-                            </table>
-                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-slate-200"><tr><th class="p-3">Title</th><th class="p-3">Created At</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="posts-table-body"></tbody></table></div>
                     </div>
                 </section>
-                <!-- Other page sections remain the same -->
+                <section id="page-notes" class="content-page hidden"><h1 class="text-4xl font-bold text-slate-800">Notes Store (Coming Soon)</h1></section>
+                <section id="page-subscribers" class="content-page hidden"><h1 class="text-4xl font-bold text-slate-800">Subscribers (Coming Soon)</h1></section>
             </main>
         </div>
     </div>
 
     <!-- Confirmation Modal -->
-    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
             <h3 class="text-lg font-bold">Are you sure?</h3>
             <p class="text-slate-600 my-2">This action cannot be undone.</p>
@@ -97,11 +105,169 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+
     <script>
-    // Paste the full admin.html script from the previous response here.
-    // The script now includes functions for edit, update, delete,
-    // and initialization for the TinyMCE rich text editor.
-    // Due to length limitations, the script is omitted here but is present in the provided file.
+      const firebaseConfig = {
+        apiKey: "AIzaSyDJ-sfeQt1lfCs3eOp8itVLqJjtrZGd1oM",
+        authDomain: "shifat-siam-website.firebaseapp.com",
+        projectId: "shifat-siam-website",
+        storageBucket: "shifat-siam-website.appspot.com",
+        messagingSenderId: "888645046287",
+        appId: "1:888645046287:web:fc40862194cb3d934e937a"
+      };
+
+      const app = firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      tinymce.init({ selector: '#post-content', height: 400, menubar: false, plugins: 'lists link image code', toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image | code' });
+
+      const loginContainer = document.getElementById('login-container');
+      const appLayout = document.getElementById('app-layout');
+      
+      auth.onAuthStateChanged(user => {
+        if (user) {
+            loginContainer.classList.add('hidden');
+            appLayout.classList.remove('hidden');
+            loadBlogPosts();
+        } else {
+            loginContainer.classList.remove('hidden');
+            appLayout.classList.add('hidden');
+        }
+      });
+
+      document.getElementById('login-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = '';
+        auth.signInWithEmailAndPassword(email, password).catch(err => errorMessage.textContent = 'Invalid email or password.');
+      });
+
+      document.getElementById('signout-button').addEventListener('click', () => auth.signOut());
+
+      const pages = document.querySelectorAll('.content-page');
+      const navLinks = document.querySelectorAll('.sidebar-link');
+      navLinks.forEach(link => {
+        if(link.id === 'signout-button') return;
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const targetId = `page-${link.id.split('-')[1]}`;
+            pages.forEach(page => page.classList.add('hidden'));
+            document.getElementById(targetId).classList.remove('hidden');
+            navLinks.forEach(nav => nav.classList.remove('active'));
+            link.classList.add('active');
+        });
+      });
+      
+      const blogForm = document.getElementById('blog-post-form');
+      const formTitle = document.getElementById('form-title');
+      const publishButton = document.getElementById('publish-post-button');
+      const cancelEditButton = document.getElementById('cancel-edit-button');
+
+      blogForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('post-id').value;
+        const title = document.getElementById('post-title').value;
+        const content = tinymce.get('post-content').getContent();
+        const imageUrl = document.getElementById('post-image-url').value;
+        const blogMessage = document.getElementById('blog-message');
+
+        publishButton.disabled = true;
+        
+        const postData = { title, content, imageUrl, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+        if (!id) { // Only add createdAt on new posts
+            postData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            postData.views = 0; postData.likes = 0; postData.dislikes = 0;
+        }
+
+        try {
+            if (id) {
+                await db.collection('posts').doc(id).update(postData);
+                blogMessage.textContent = 'Post updated successfully!';
+            } else {
+                await db.collection('posts').add(postData);
+                blogMessage.textContent = 'Post published successfully!';
+            }
+            blogMessage.className = 'text-sm text-green-600';
+            resetForm();
+        } catch (error) {
+            blogMessage.textContent = 'Error saving post.';
+            blogMessage.className = 'text-sm text-red-500';
+            console.error(error);
+        } finally {
+            publishButton.disabled = false;
+            setTimeout(() => blogMessage.textContent = '', 3000);
+        }
+      });
+      
+      cancelEditButton.addEventListener('click', resetForm);
+
+      function resetForm() {
+        blogForm.reset();
+        tinymce.get('post-content').setContent('');
+        document.getElementById('post-id').value = '';
+        formTitle.textContent = 'Create New Post';
+        publishButton.textContent = 'Publish Post';
+        cancelEditButton.classList.add('hidden');
+      }
+
+      const postsTableBody = document.getElementById('posts-table-body');
+      function loadBlogPosts() {
+          db.collection('posts').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+              if (snapshot.empty) {
+                  postsTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-500">No posts yet.</td></tr>`;
+                  return;
+              }
+              postsTableBody.innerHTML = snapshot.docs.map(doc => {
+                  const post = doc.data();
+                  const date = post.createdAt?.toDate().toLocaleDateString() || 'N/A';
+                  return `
+                    <tr class="border-b border-slate-200">
+                        <td class="p-3 font-medium">${post.title}</td>
+                        <td class="p-3 text-slate-500">${date}</td>
+                        <td class="p-3 text-right space-x-2">
+                            <button onclick="handleEdit('${doc.id}')" class="btn btn-secondary text-sm">Edit</button>
+                            <button onclick="handleDelete('${doc.id}')" class="btn btn-danger text-sm">Delete</button>
+                        </td>
+                    </tr>`;
+              }).join('');
+          }, err => console.error("Error loading posts: ", err));
+      }
+
+      async function handleEdit(id) {
+        const doc = await db.collection('posts').doc(id).get();
+        if (!doc.exists) return;
+        const post = doc.data();
+        document.getElementById('post-id').value = id;
+        document.getElementById('post-title').value = post.title;
+        document.getElementById('post-image-url').value = post.imageUrl;
+        tinymce.get('post-content').setContent(post.content);
+        formTitle.textContent = 'Edit Post';
+        publishButton.textContent = 'Update Post';
+        cancelEditButton.classList.remove('hidden');
+        window.scrollTo(0,0);
+      }
+
+      const modal = document.getElementById('confirmation-modal');
+      let postIdToDelete = null;
+      function handleDelete(id) {
+          postIdToDelete = id;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+      }
+      document.getElementById('modal-cancel').addEventListener('click', () => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          postIdToDelete = null;
+      });
+      document.getElementById('modal-confirm').addEventListener('click', async () => {
+        if(postIdToDelete) {
+            await db.collection('posts').doc(postIdToDelete).delete();
+            document.getElementById('modal-cancel').click(); // close modal
+        }
+      });
     </script>
 </body>
 </html>
