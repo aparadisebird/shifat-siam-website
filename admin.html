@@ -5,83 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Shifat S. Siam</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
+            width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
         .form-input:focus {
-            outline: none;
-            border-color: #10B981;
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+            outline: none; border-color: #10B981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
         }
+        .sidebar-link {
+            display: flex; align-items: center; padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+            color: #cbd5e1; transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar-link:hover { background-color: #334155; color: white; }
+        .sidebar-link.active { background-color: #10B981; color: white; }
+        .sidebar-link i { width: 1.25rem; margin-right: 0.75rem; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; transition: background-color 0.2s; }
+        .btn-primary { background-color: #10B981; color: white; }
+        .btn-primary:hover { background-color: #059669; }
+        .btn-secondary { background-color: #e2e8f0; color: #475569; }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
     </style>
 </head>
-<body class="bg-slate-100 flex items-center justify-center min-h-screen py-12">
+<body class="antialiased">
 
-    <!-- Login Form Container -->
-    <div id="login-container" class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <div>
-            <h2 class="text-3xl font-extrabold text-center text-slate-900">Admin Panel Login</h2>
+    <!-- Login Screen -->
+    <div id="login-container" class="flex items-center justify-center min-h-screen bg-slate-100">
+        <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-lg shadow-xl">
+            <h2 class="text-3xl font-extrabold text-center text-slate-900">Admin Panel</h2>
+            <form id="login-form" class="space-y-6">
+                <input id="email" type="email" required class="form-input" placeholder="Email address">
+                <input id="password" type="password" required class="form-input" placeholder="Password">
+                <p id="error-message" class="text-red-500 text-sm h-4"></p>
+                <button type="submit" class="w-full btn btn-primary py-3">Sign in</button>
+            </form>
         </div>
-        <form id="login-form" class="space-y-6">
-            <div>
-                <label for="email" class="sr-only">Email address</label>
-                <input id="email" name="email" type="email" autocomplete="email" required class="w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" placeholder="Email address">
-            </div>
-            <div>
-                <label for="password" class="sr-only">Password</label>
-                <input id="password" name="password" type="password" autocomplete="current-password" required class="w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500" placeholder="Password">
-            </div>
-            <p id="error-message" class="text-red-500 text-sm"></p>
-            <div>
-                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                    Sign in
-                </button>
-            </div>
-        </form>
     </div>
 
-    <!-- Admin Dashboard Content (Hidden by default) -->
-    <div id="dashboard-container" class="hidden w-full max-w-4xl p-8 bg-white rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-900">Welcome, Shifat!</h1>
-            <button id="signout-button" class="text-sm font-medium text-emerald-600 hover:text-emerald-800">Sign Out</button>
-        </div>
-        
-        <div class="space-y-12">
-            <!-- Blog Post Management Section -->
-            <div>
-                <h2 class="text-2xl font-bold border-b pb-2 mb-4">Create New Blog Post</h2>
-                <form id="blog-post-form" class="space-y-4">
-                    <div>
-                        <label for="post-title" class="block text-sm font-medium text-slate-700">Post Title</label>
-                        <input type="text" id="post-title" class="form-input mt-1" required>
+    <!-- Main Dashboard Layout (Hidden by default) -->
+    <div id="app-layout" class="hidden">
+        <div class="flex h-screen bg-slate-100">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-slate-800 text-white flex flex-col">
+                <div class="p-6 text-2xl font-bold border-b border-slate-700">Shifat S. Siam</div>
+                <nav class="flex-1 p-4 space-y-2">
+                    <a href="#" id="nav-dashboard" class="sidebar-link active"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
+                    <a href="#" id="nav-blog" class="sidebar-link"><i class="fas fa-pencil-alt"></i>Blog Posts</a>
+                    <a href="#" id="nav-notes" class="sidebar-link"><i class="fas fa-file-invoice-dollar"></i>Notes Store</a>
+                    <a href="#" id="nav-subscribers" class="sidebar-link"><i class="fas fa-users"></i>Subscribers</a>
+                </nav>
+                <div class="p-4 border-t border-slate-700">
+                    <button id="signout-button" class="sidebar-link w-full text-left"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto p-8">
+                <!-- Dashboard Section -->
+                <section id="page-dashboard" class="content-page">
+                    <h1 class="text-4xl font-bold text-slate-800 mb-6">Dashboard</h1>
+                    <p class="text-slate-600">Welcome to your management panel. Here's a quick overview of your site.</p>
+                </section>
+
+                <!-- Blog Management Section -->
+                <section id="page-blog" class="content-page hidden">
+                    <h1 class="text-4xl font-bold text-slate-800 mb-6">Blog Management</h1>
+                    
+                    <!-- Create New Post Form -->
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                        <h2 class="text-2xl font-bold mb-4">Create New Post</h2>
+                        <form id="blog-post-form" class="space-y-4">
+                            <input type="text" id="post-title" class="form-input" placeholder="Post Title" required>
+                            <input type="url" id="post-image-url" class="form-input" placeholder="Image URL (e.g., from placehold.co)">
+                            <textarea id="post-content" rows="8" class="form-input" placeholder="Write your content here..." required></textarea>
+                            <div class="flex justify-end">
+                                <button type="submit" id="publish-post-button" class="btn btn-primary">Publish Post</button>
+                            </div>
+                            <p id="blog-message" class="text-sm h-4 mt-2"></p>
+                        </form>
                     </div>
-                     <div>
-                        <label for="post-image-url" class="block text-sm font-medium text-slate-700">Image URL (e.g., from placehold.co)</label>
-                        <input type="text" id="post-image-url" class="form-input mt-1" placeholder="https://placehold.co/600x400/10B981/FFFFFF?text=Health+Tech">
+
+                    <!-- Existing Posts Table -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-bold mb-4">Published Posts</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="border-b-2 border-slate-200">
+                                    <tr>
+                                        <th class="p-3">Title</th>
+                                        <th class="p-3">Created At</th>
+                                        <th class="p-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="posts-table-body">
+                                    <!-- Posts will be loaded here dynamically -->
+                                    <tr><td colspan="3" class="text-center p-4 text-slate-500">Loading posts...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div>
-                        <label for="post-content" class="block text-sm font-medium text-slate-700">Content</label>
-                        <textarea id="post-content" rows="10" class="form-input mt-1" required></textarea>
-                    </div>
-                    <div>
-                        <button type="submit" id="publish-post-button" class="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700">Publish Post</button>
-                    </div>
-                    <p id="blog-message" class="text-sm"></p>
-                </form>
-            </div>
-             
-            <!-- Notes Store Management Section -->
-            <div>
-                <h2 class="text-2xl font-bold border-b pb-2 mb-4">Notes Store Management</h2>
-                <p class="text-slate-600">This is where you will upload new notes for sale and set their prices. (Coming soon)</p>
-            </div>
+                </section>
+
+                <!-- Notes Store Section -->
+                <section id="page-notes" class="content-page hidden">
+                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Notes Store Management</h1>
+                     <p class="text-slate-600">Functionality to add and manage paid notes is coming soon!</p>
+                </section>
+
+                <!-- Subscribers Section -->
+                <section id="page-subscribers" class="content-page hidden">
+                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Newsletter Subscribers</h1>
+                     <p class="text-slate-600">Functionality to view and manage your subscribers is coming soon!</p>
+                </section>
+
+            </main>
         </div>
     </div>
 
@@ -92,42 +134,71 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
 
     <script>
-      // Your web app's Firebase configuration
+      // Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyDJ-sfeQt1lfCs3eOp8itVLqJjtrZGd1oM",
         authDomain: "shifat-siam-website.firebaseapp.com",
         projectId: "shifat-siam-website",
         storageBucket: "shifat-siam-website.appspot.com",
         messagingSenderId: "888645046287",
-        appId: "1:888645046287:web:fc40862194cb3d934e937a",
-        measurementId: "G-B6XZEVNMHY"
+        appId: "1:888645046287:web:fc40862194cb3d934e937a"
       };
 
       // Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
+      const app = firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
 
-      // --- UI Elements ---
+      // UI Elements
       const loginContainer = document.getElementById('login-container');
-      const dashboardContainer = document.getElementById('dashboard-container');
+      const appLayout = document.getElementById('app-layout');
       const loginForm = document.getElementById('login-form');
       const errorMessage = document.getElementById('error-message');
       const signoutButton = document.getElementById('signout-button');
-
-      // --- Login/Logout Logic (No Changes) ---
+      
+      // --- Authentication Logic ---
       loginForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const email = document.getElementById('email').value;
-          const password = document.getElementById('password').value;
-          errorMessage.textContent = '';
-          auth.signInWithEmailAndPassword(email, password).catch((error) => {
-              errorMessage.textContent = 'Invalid email or password. Please try again.';
-          });
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        errorMessage.textContent = '';
+        auth.signInWithEmailAndPassword(email, password).catch((error) => {
+            errorMessage.textContent = 'Invalid email or password.';
+        });
       });
-      signoutButton.addEventListener('click', () => { auth.signOut(); });
 
-      // --- NEW: Blog Form Logic ---
+      signoutButton.addEventListener('click', () => auth.signOut());
+
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          loginContainer.style.display = 'none';
+          appLayout.style.display = 'block';
+          // When user logs in, load the posts
+          loadBlogPosts();
+        } else {
+          loginContainer.style.display = 'flex';
+          appLayout.style.display = 'none';
+        }
+      });
+
+      // --- Navigation Logic ---
+      const pages = document.querySelectorAll('.content-page');
+      const navLinks = document.querySelectorAll('.sidebar-link');
+
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetId = `page-${link.id.split('-')[1]}`;
+          
+          pages.forEach(page => page.classList.add('hidden'));
+          document.getElementById(targetId).classList.remove('hidden');
+          
+          navLinks.forEach(nav => nav.classList.remove('active'));
+          link.classList.add('active');
+        });
+      });
+      
+      // --- Blog Post Management ---
       const blogPostForm = document.getElementById('blog-post-form');
       const blogMessage = document.getElementById('blog-message');
       const publishPostButton = document.getElementById('publish-post-button');
@@ -137,87 +208,61 @@
           publishPostButton.disabled = true;
           publishPostButton.textContent = 'Publishing...';
           blogMessage.textContent = '';
-          
-          const title = document.getElementById('post-title').value;
-          const content = document.getElementById('post-content').value;
-          const imageUrl = document.getElementById('post-image-url').value;
-
-          if (!title || !content) {
-              blogMessage.textContent = 'Error: Title and Content are required.';
-              blogMessage.classList.add('text-red-500');
-              publishPostButton.disabled = false;
-              publishPostButton.textContent = 'Publish Post';
-              return;
-          }
 
           try {
               await db.collection('posts').add({
-                  title: title,
-                  content: content,
-                  imageUrl: imageUrl,
-                  createdAt: new Date(),
-                  // Let's add placeholders for interactions
-                  views: 0,
-                  likes: 0,
-                  dislikes: 0
+                  title: document.getElementById('post-title').value,
+                  content: document.getElementById('post-content').value,
+                  imageUrl: document.getElementById('post-image-url').value,
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  views: 0, likes: 0, dislikes: 0
               });
-
-              blogMessage.textContent = 'Success! Your blog post has been published.';
-              blogMessage.classList.remove('text-red-500');
-              blogMessage.classList.add('text-green-600');
+              blogMessage.textContent = 'Post published successfully!';
+              blogMessage.className = 'text-sm text-green-600';
               blogPostForm.reset();
-
           } catch (error) {
-              console.error("Error adding post: ", error);
-              blogMessage.textContent = 'An error occurred. Please try again.';
-              blogMessage.classList.add('text-red-500');
+              blogMessage.textContent = 'Error publishing post.';
+              blogMessage.className = 'text-sm text-red-500';
+              console.error(error);
           } finally {
               publishPostButton.disabled = false;
               publishPostButton.textContent = 'Publish Post';
+              setTimeout(() => { blogMessage.textContent = ''; }, 3000);
           }
       });
-      
-      // --- Authentication State Observer ---
-      auth.onAuthStateChanged((user) => {
-          if (user) {
-              loginContainer.classList.add('hidden');
-              dashboardContainer.classList.remove('hidden');
-          } else {
-              loginContainer.classList.remove('hidden');
-              dashboardContainer.classList.add('hidden');
-          }
-      });
+
+      // --- Function to Load and Display Blog Posts ---
+      function loadBlogPosts() {
+          const postsTableBody = document.getElementById('posts-table-body');
+          
+          db.collection('posts').orderBy('createdAt', 'desc')
+            .onSnapshot(querySnapshot => {
+              if (querySnapshot.empty) {
+                  postsTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-slate-500">No posts found. Write your first one!</td></tr>`;
+                  return;
+              }
+              
+              let html = '';
+              querySnapshot.forEach(doc => {
+                  const post = doc.data();
+                  const date = post.createdAt ? post.createdAt.toDate().toLocaleDateString() : 'Just now';
+                  html += `
+                      <tr class="border-b border-slate-200 hover:bg-slate-50">
+                          <td class="p-3 font-medium text-slate-800">${post.title}</td>
+                          <td class="p-3 text-slate-600">${date}</td>
+                          <td class="p-3 space-x-2">
+                              <button class="btn btn-secondary text-sm">Edit</button>
+                              <button class="btn btn-danger text-sm">Delete</button>
+                          </td>
+                      </tr>
+                  `;
+              });
+              postsTableBody.innerHTML = html;
+          }, error => {
+              console.error("Error loading posts: ", error);
+              postsTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-red-500">Error loading posts.</td></tr>`;
+          });
+      }
     </script>
 </body>
 </html>
-```
-
-### **Step 2: Update Your Security Rules**
-
-This is a **critical step**. Right now, your database only allows writing to the `subscribers` collection. We need to give permission for you (and only you) to write to a new `posts` collection.
-
-1.  Go to your **Firebase Console -> Firestore Database -> Rules** tab.
-2.  **Replace** the existing rules with the following code. This adds a new rule for blog posts while keeping your old rule for subscribers.
-
-    ```
-    rules_version = '2';
-    service cloud.firestore {
-      match /databases/{database}/documents {
-    
-        // Rule for subscribers (no change)
-        match /subscribers/{subscriberId} {
-          allow create: if true;
-          allow read, update, delete: if false;
-        }
-    
-        // NEW RULE for blog posts
-        match /posts/{postId} {
-          // Allow anyone in the world to read posts for your public blog.
-          allow read: if true;
-      
-          // ONLY allow write access (create, update, delete) if a user is signed in.
-          // Since you are the only user, only you can manage posts.
-          allow write: if request.auth != null;
-        }
-      }
-    }
