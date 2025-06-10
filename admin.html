@@ -101,15 +101,13 @@
 
       // --- AUTH & NAV ---
       auth.onAuthStateChanged(user => {
-        const loginContainer = document.getElementById('login-container');
-        const appLayout = document.getElementById('app-layout');
         if (user) {
-            loginContainer.classList.add('hidden');
-            appLayout.classList.remove('hidden');
+            document.getElementById('app-layout').classList.remove('hidden');
+            document.getElementById('login-container').classList.add('hidden');
             loadAllAdminData();
         } else {
-            loginContainer.classList.remove('hidden');
-            appLayout.classList.add('hidden');
+            document.getElementById('app-layout').classList.add('hidden');
+            document.getElementById('login-container').classList.remove('hidden');
         }
       });
       document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.'); });
@@ -206,8 +204,12 @@
                   return;
               }
               const transactionData = await Promise.all(pendingTransactions.map(async tx => {
-                  const noteSnap = await db.collection('notes').doc(tx.noteId).get();
-                  return { ...tx, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
+                  try {
+                      const noteSnap = await db.collection('notes').doc(tx.noteId).get();
+                      return { ...tx, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
+                  } catch (e) {
+                      return {...tx, noteTitle: 'Error loading note name'};
+                  }
               }));
               transactionData.sort((a, b) => (a.submittedAt?.toDate() || 0) - (b.submittedAt?.toDate() || 0));
               tableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction(this, '${tx.id}', '${tx.noteId}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction(this, '${tx.id}', null, 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
