@@ -169,6 +169,8 @@
       // --- COMMENT MANAGEMENT (DEFINITIVE FIX) ---
       function loadComments() {
           const commentsTableBody = document.getElementById('comments-table-body');
+          // **THE FIX:** This simplified query fetches all posts first, then gets their comments.
+          // This avoids the complex "collectionGroup" query that required a special index.
           db.collection('posts').onSnapshot(async postsSnapshot => {
               let allComments = [];
               for (const postDoc of postsSnapshot.docs) {
