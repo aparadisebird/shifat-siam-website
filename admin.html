@@ -171,12 +171,12 @@
                       const comment = doc.data();
                       const postSnap = await doc.ref.parent.parent.get();
                       return { ...comment, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
-                  } catch (e) { return null; }
+                  } catch (e) { console.error("Error fetching parent post for comment:", e); return null; }
               });
               let commentsData = (await Promise.all(commentsPromises)).filter(c => c);
               commentsData.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
               tableBody.innerHTML = commentsData.map(c => `<tr><td class="p-3">${c.text}</td><td class="p-3">${c.name}</td><td class="p-3">${c.postTitle}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${c.path}', 'comment')" class="btn btn-danger text-sm">Delete</button></td></tr>`).join('');
-          }, error => { console.error("Error loading comments:", error); tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading comments.</td></tr>`; });
+          }, error => { console.error("Error loading comments:", error); tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading comments. Please check console for details.</td></tr>`; });
       }
 
       // --- NOTES MANAGEMENT ---
