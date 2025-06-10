@@ -26,7 +26,6 @@
     </style>
 </head>
 <body class="antialiased">
-
     <!-- Login Screen -->
     <div id="login-container" class="flex items-center justify-center min-h-screen bg-slate-100">
         <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-lg shadow-xl"><h2 class="text-3xl font-extrabold text-center text-slate-900">Admin Panel</h2><form id="login-form" class="space-y-6"><input id="email" type="email" required class="form-input" placeholder="Email address"><input id="password" type="password" required class="form-input" placeholder="Password"><p id="error-message" class="text-red-500 text-sm h-4"></p><button type="submit" class="w-full btn bg-emerald-600 text-white py-3">Sign in</button></form></div>
@@ -51,18 +50,15 @@
             <!-- Main Content Area -->
             <main class="flex-1 overflow-y-auto p-8">
                 <section id="page-dashboard" class="content-page"><h1 class="text-4xl font-bold text-slate-800 mb-6">Dashboard</h1><p class="text-slate-600">Welcome! Use the sidebar to manage your content.</p></section>
-                
                 <section id="page-blog" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Blog Management</h1>
                     <div class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 id="form-title" class="text-2xl font-bold mb-4">Create New Post</h2><form id="blog-post-form" class="space-y-4"><input type="hidden" id="post-id"><input type="text" id="post-title" class="form-input" placeholder="Post Title" required><input type="url" id="post-image-url" class="form-input" placeholder="Cover Image URL (optional)"><textarea id="post-content" class="form-input"></textarea><div class="flex justify-end space-x-2"><button type="button" id="cancel-edit-button" class="btn bg-slate-500 text-white hidden">Cancel Edit</button><button type="submit" id="publish-post-button" class="btn btn-primary">Publish Post</button></div><p id="blog-message" class="text-sm h-4 mt-2"></p></form></div>
                     <div class="bg-white p-6 rounded-lg shadow-md"><h2 class="text-2xl font-bold mb-4">Published Posts</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-slate-200"><tr><th class="p-3">Title</th><th class="p-3">Created At</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="posts-table-body"></tbody></table></div></div>
                 </section>
-                
                 <section id="page-comments" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Comment Moderation</h1>
                     <div class="bg-white p-6 rounded-lg shadow-md"><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-slate-200"><tr><th class="p-3">Comment</th><th class="p-3">Author</th><th class="p-3">Post Title</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="comments-table-body"></tbody></table></div></div>
                 </section>
-                
                 <section id="page-notes" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Notes Store Management</h1>
                     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -71,7 +67,6 @@
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-md"><h2 class="text-2xl font-bold mb-4">Listed Notes</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr><th class="p-3">Title</th><th class="p-3">Price</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="notes-table-body"></tbody></table></div></div>
                 </section>
-
                 <section id="page-transactions" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Transaction Verification</h1>
                     <div id="access-link-container" class="hidden bg-emerald-100 border border-emerald-400 text-emerald-800 px-4 py-3 rounded-lg relative mb-6" role="alert"><strong class="font-bold">Approval Successful!</strong><span class="block sm:inline">Send this secure link to the user:</span><textarea id="access-link-textarea" class="w-full bg-emerald-50 mt-2 p-2 rounded" readonly></textarea><button id="copy-link-button" class="bg-emerald-600 text-white p-1 rounded text-sm mt-1">Copy Link</button></div>
