@@ -5,124 +5,229 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Shifat S. Siam</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.tiny.cloud/1/YOUR_API_KEY_HERE/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.tiny.cloud/1/q1pibeckxw15ffl3jf95s9pi3bbmsoq7m49bmbzwcqyrxxtc/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .form-input { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; }
+        .form-input { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; transition: all 0.2s; }
+        .form-input:focus { outline: none; border-color: #10B981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5); }
         .sidebar-link { display: flex; align-items: center; padding: 0.75rem 1.5rem; border-radius: 0.5rem; color: #cbd5e1; transition: background-color 0.2s, color 0.2s; cursor: pointer; }
-        .sidebar-link.active { background-color: #10B981; color: white; }
-        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; transition: background-color 0.2s; cursor: pointer; }
-        .btn-danger { background-color: #ef4444; color: white; }
-        .btn-danger:hover { background-color: #dc2626; }
+        .sidebar-link:hover { background-color: #334155; color: white; }
+        .sidebar-link.active { background-color: #10B981; color: white; font-weight: 600; }
+        .sidebar-link i { width: 1.25rem; margin-right: 0.75rem; text-align: center; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; transition: background-color 0.2s; cursor: pointer; border: none; }
+        .btn-primary { background-color: #10B981; color: white; } .btn-primary:hover { background-color: #059669; }
+        .btn-secondary { background-color: #3b82f6; color: white; } .btn-secondary:hover { background-color: #2563eb; }
+        .btn-danger { background-color: #ef4444; color: white; } .btn-danger:hover { background-color: #dc2626; }
     </style>
 </head>
 <body class="antialiased">
-    <!-- Login Screen -->
+
     <div id="login-container" class="flex items-center justify-center min-h-screen bg-slate-100">
-        <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-lg shadow-xl"><h2 class="text-3xl font-extrabold text-center text-slate-900">Admin Panel</h2><form id="login-form" class="space-y-6"><input id="email" type="email" required class="form-input" placeholder="Email address"><input id="password" type="password" required class="form-input" placeholder="Password"><p id="error-message" class="text-red-500 text-sm h-4"></p><button type="submit" class="w-full btn bg-emerald-600 text-white py-3">Sign in</button></form></div>
+        <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-lg shadow-xl">
+            <h2 class="text-3xl font-extrabold text-center text-slate-900">Admin Panel</h2>
+            <form id="login-form" class="space-y-6">
+                <input id="email" type="email" required class="form-input" placeholder="Email address">
+                <input id="password" type="password" required class="form-input" placeholder="Password">
+                <p id="error-message" class="text-red-500 text-sm h-4"></p>
+                <button type="submit" class="w-full btn bg-emerald-600 text-white py-3">Sign in</button>
+            </form>
+        </div>
     </div>
 
-    <!-- Main Dashboard Layout -->
     <div id="app-layout" class="hidden">
         <div class="flex h-screen bg-slate-100">
-            <!-- Sidebar -->
             <aside class="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0">
                 <div class="p-6 text-2xl font-bold border-b border-slate-700">Shifat S. Siam</div>
-                <nav class="flex-1 p-4 space-y-2">
-                    <a id="nav-dashboard" class="sidebar-link active"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-                    <a id="nav-blog" class="sidebar-link"><i class="fas fa-pencil-alt"></i>Blog Posts</a>
-                    <a id="nav-comments" class="sidebar-link"><i class="fas fa-comments"></i>Comments</a>
-                    <a id="nav-notes" class="sidebar-link"><i class="fas fa-file-invoice-dollar"></i>Notes Store</a>
+                <nav id="sidebar-nav" class="flex-1 p-4 space-y-2">
+                    <a href="#dashboard" class="sidebar-link active"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
+                    <a href="#blog" class="sidebar-link"><i class="fas fa-pencil-alt"></i>Blog Posts</a>
+                    <a href="#comments" class="sidebar-link"><i class="fas fa-comments"></i>Comments</a>
+                    <a href="#notes" class="sidebar-link"><i class="fas fa-file-invoice-dollar"></i>Notes Store</a>
                 </nav>
-                <div class="p-4 border-t border-slate-700"><button id="signout-button" class="sidebar-link w-full text-left"><i class="fas fa-sign-out-alt"></i>Sign Out</button></div>
+                <div class="p-4 border-t border-slate-700">
+                    <button id="signout-button" class="sidebar-link w-full text-left"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+                </div>
             </aside>
 
-            <!-- Main Content Area -->
             <main class="flex-1 overflow-y-auto p-8">
                 <section id="page-dashboard" class="content-page"><h1 class="text-4xl font-bold text-slate-800 mb-6">Dashboard</h1><p class="text-slate-600">Welcome! Use the sidebar to manage your content.</p></section>
+                
                 <section id="page-blog" class="content-page hidden">
-                    <!-- Blog Management form and table -->
+                    <h1 class="text-4xl font-bold text-slate-800 mb-6">Blog Management</h1>
+                    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                        <h2 id="form-title" class="text-2xl font-bold mb-4">Create New Post</h2>
+                        <form id="blog-post-form" class="space-y-4"><input type="hidden" id="post-id"><input type="text" id="post-title" class="form-input" placeholder="Post Title" required><input type="url" id="post-image-url" class="form-input" placeholder="Cover Image URL (optional)"><textarea id="post-content" class="form-input"></textarea><div class="flex justify-end space-x-2"><button type="button" id="cancel-edit-button" class="btn bg-slate-500 text-white hidden">Cancel Edit</button><button type="submit" id="publish-post-button" class="btn btn-primary">Publish Post</button></div><p id="blog-message" class="text-sm h-4 mt-2"></p></form>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md"><h2 class="text-2xl font-bold mb-4">Published Posts</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-slate-200"><tr><th class="p-3">Title</th><th class="p-3">Created At</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="posts-table-body"></tbody></table></div></div>
                 </section>
+                
                 <section id="page-comments" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Comment Moderation</h1>
-                    <div class="bg-white p-6 rounded-lg shadow-md">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="border-b-2 border-slate-200">
-                                    <tr>
-                                        <th class="p-3">Comment</th>
-                                        <th class="p-3">Author</th>
-                                        <th class="p-3">Date</th>
-                                        <th class="p-3 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="comments-table-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md"><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-slate-200"><tr><th class="p-3">Comment</th><th class="p-3">Author</th><th class="p-3">Post Title</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="comments-table-body"></tbody></table></div></div>
                 </section>
+                
                 <section id="page-notes" class="content-page hidden"><h1 class="text-4xl font-bold text-slate-800">Notes Store (Coming Soon)</h1></section>
             </main>
         </div>
     </div>
-    <!-- Confirmation Modal and other HTML elements -->
+
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"><div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm"><h3 class="text-lg font-bold">Are you sure?</h3><p class="text-slate-600 my-2">This action cannot be undone.</p><div class="flex justify-end space-x-2 mt-4"><button id="modal-cancel" class="btn bg-slate-200 text-slate-800">Cancel</button><button id="modal-confirm" class="btn btn-danger">Delete</button></div></div></div>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    
     <script>
-      // The complete JavaScript for the admin panel now includes a `loadComments` function
-      // and a `handleCommentDelete` function. The full script is in the immersive.
-      // Remember to replace 'YOUR_API_KEY_HERE' in the TinyMCE script tag.
       const firebaseConfig = { apiKey: "AIzaSyDJ-sfeQt1lfCs3eOp8itVLqJjtrZGd1oM", authDomain: "shifat-siam-website.firebaseapp.com", projectId: "shifat-siam-website", storageBucket: "shifat-siam-website.appspot.com", messagingSenderId: "888645046287", appId: "1:888645046287:web:fc40862194cb3d934e937a" };
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
 
+      tinymce.init({ selector: '#post-content', height: 400, menubar: false, plugins: 'lists link image code', toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image | code' });
+
+      // --- AUTHENTICATION ---
       auth.onAuthStateChanged(user => {
+        const loginContainer = document.getElementById('login-container');
+        const appLayout = document.getElementById('app-layout');
         if (user) {
-            document.getElementById('app-layout').classList.remove('hidden');
-            document.getElementById('login-container').classList.add('hidden');
+            loginContainer.classList.add('hidden');
+            appLayout.classList.remove('hidden');
             loadBlogPosts();
             loadComments();
         } else {
-            document.getElementById('app-layout').classList.add('hidden');
-            document.getElementById('login-container').classList.remove('hidden');
+            loginContainer.classList.remove('hidden');
+            appLayout.classList.add('hidden');
         }
       });
-      // ... other functions (login, nav, blog management)
+      document.getElementById('login-form').addEventListener('submit', e => {
+        e.preventDefault();
+        auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value)
+          .catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.');
+      });
+      document.getElementById('signout-button').addEventListener('click', () => auth.signOut());
+
+      // --- NAVIGATION ---
+      const sidebarNav = document.getElementById('sidebar-nav');
+      sidebarNav.addEventListener('click', (e) => {
+          const link = e.target.closest('a');
+          if (link) {
+              e.preventDefault();
+              const targetId = `page-${link.getAttribute('href').substring(1)}`;
+              
+              document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
+              document.getElementById(targetId).classList.remove('hidden');
+              
+              sidebarNav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+              link.classList.add('active');
+          }
+      });
+
+      // --- BLOG MANAGEMENT ---
+      const blogForm = document.getElementById('blog-post-form');
+      blogForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('post-id').value;
+        const postData = {
+            title: document.getElementById('post-title').value,
+            content: tinymce.get('post-content').getContent(),
+            imageUrl: document.getElementById('post-image-url').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        try {
+            if (id) {
+                await db.collection('posts').doc(id).update(postData);
+            } else {
+                postData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                postData.views = 0; postData.likes = 0; postData.dislikes = 0;
+                await db.collection('posts').add(postData);
+            }
+            resetForm();
+        } catch (error) { console.error("Error saving post: ", error); }
+      });
       
+      function loadBlogPosts() {
+          db.collection('posts').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+              const postsTableBody = document.getElementById('posts-table-body');
+              if (snapshot.empty) { postsTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No posts yet.</td></tr>`; return; }
+              postsTableBody.innerHTML = snapshot.docs.map(doc => {
+                  const post = doc.data();
+                  const date = post.createdAt?.toDate().toLocaleDateString() || 'N/A';
+                  return `<tr><td class="p-3">${post.title}</td><td class="p-3">${date}</td><td class="p-3 text-right space-x-2"><button onclick="handleEdit('${doc.id}')" class="btn btn-secondary text-sm">Edit</button><button onclick="openConfirmationModal('${doc.id}', 'post')"" class="btn btn-danger text-sm">Delete</button></td></tr>`;
+              }).join('');
+          });
+      }
+      
+      async function handleEdit(id) {
+          document.querySelector('a[href="#blog"]').click(); // Switch to blog page
+          const doc = await db.collection('posts').doc(id).get();
+          if (!doc.exists) return;
+          const post = doc.data();
+          document.getElementById('post-id').value = id;
+          document.getElementById('post-title').value = post.title;
+          document.getElementById('post-image-url').value = post.imageUrl;
+          tinymce.get('post-content').setContent(post.content);
+          document.getElementById('form-title').textContent = 'Edit Post';
+          document.getElementById('publish-post-button').textContent = 'Update Post';
+          document.getElementById('cancel-edit-button').classList.remove('hidden');
+          window.scrollTo(0,0);
+      }
+      
+      function resetForm() {
+          blogForm.reset();
+          tinymce.get('post-content').setContent('');
+          document.getElementById('post-id').value = '';
+          document.getElementById('form-title').textContent = 'Create New Post';
+          document.getElementById('publish-post-button').textContent = 'Publish Post';
+          document.getElementById('cancel-edit-button').classList.add('hidden');
+      }
+      document.getElementById('cancel-edit-button').addEventListener('click', resetForm);
+
+      // --- COMMENT MANAGEMENT ---
       function loadComments() {
-          const commentsTableBody = document.getElementById('comments-table-body');
-          db.collectionGroup('comments').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-              if (snapshot.empty) {
-                  commentsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No comments yet.</td></tr>`;
-                  return;
-              }
-              let html = '';
-              snapshot.forEach(doc => {
+          db.collectionGroup('comments').orderBy('createdAt', 'desc').onSnapshot(async snapshot => {
+              const commentsTableBody = document.getElementById('comments-table-body');
+              if (snapshot.empty) { commentsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No comments yet.</td></tr>`; return; }
+              const commentsData = await Promise.all(snapshot.docs.map(async doc => {
                   const comment = doc.data();
-                  const date = comment.createdAt?.toDate().toLocaleDateString() || 'N/A';
-                  html += `
-                    <tr class="border-b border-slate-200">
-                        <td class="p-3 text-slate-600">${comment.text}</td>
-                        <td class="p-3 font-medium">${comment.name}</td>
-                        <td class="p-3 text-slate-500">${date}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="handleCommentDelete('${doc.ref.path}')" class="btn btn-danger text-sm">Delete</button>
-                        </td>
-                    </tr>`;
-              });
-              commentsTableBody.innerHTML = html;
-          }, err => console.error("Error loading comments: ", err));
+                  const postRef = doc.ref.parent.parent;
+                  const postSnap = await postRef.get();
+                  return { ...comment, id: doc.id, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
+              }));
+              commentsTableBody.innerHTML = commentsData.map(c => `<tr><td class="p-3">${c.text}</td><td class="p-3">${c.name}</td><td class="p-3">${c.postTitle}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${c.path}', 'comment')" class="btn btn-danger text-sm">Delete</button></td></tr>`).join('');
+          });
       }
 
-      async function handleCommentDelete(path) {
-          if (confirm('Are you sure you want to delete this comment?')) {
-              await db.doc(path).delete();
-          }
+      // --- CONFIRMATION MODAL & DELETION ---
+      const modal = document.getElementById('confirmation-modal');
+      let itemToDelete = { id: null, type: null };
+
+      function openConfirmationModal(idOrPath, type) {
+          itemToDelete = { id: idOrPath, type: type };
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
       }
+
+      document.getElementById('modal-cancel').addEventListener('click', () => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          itemToDelete = { id: null, type: null };
+      });
+
+      document.getElementById('modal-confirm').addEventListener('click', async () => {
+          if (!itemToDelete.id) return;
+          try {
+              if (itemToDelete.type === 'post') {
+                  // Note: Deleting a post does not automatically delete its subcollections (comments).
+                  // For a production app, a Cloud Function would be needed to handle this.
+                  await db.collection('posts').doc(itemToDelete.id).delete();
+              } else if (itemToDelete.type === 'comment') {
+                  await db.doc(itemToDelete.id).delete();
+              }
+          } catch (error) { console.error("Error deleting item: ", error); }
+          document.getElementById('modal-cancel').click();
+      });
     </script>
 </body>
 </html>
