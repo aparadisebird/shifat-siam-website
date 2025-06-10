@@ -47,6 +47,8 @@
       const statusContainer = document.getElementById('status-container');
 
       function renderError(title, message) {
+          statusContainer.style.display = 'block';
+          noteContainer.innerHTML = ''; // Clear any previous content
           statusContainer.innerHTML = `
             <div class="max-w-md mx-auto bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
                 <p class="font-bold">${title}</p>
@@ -70,7 +72,7 @@
                 <h1 class="font-black text-slate-900 !mb-4">${note.title}</h1>
                 <p class="text-slate-600 !mt-0">${note.description}</p>
                 <div class="prose-content mt-8">
-                    <iframe src="${embedLink}"></iframe>
+                    <iframe src="${embedLink}" allow="fullscreen"></iframe>
                 </div>
             </div>
           `;
@@ -87,26 +89,29 @@
           }
 
           try {
-              // 1. Verify the access token is valid
-              const txQuery = db.collection('transactions')
-                                .where('accessToken', '==', accessToken)
-                                .where('status', '==', 'approved');
-              
+              // **THE FIX IS HERE:**
+              // 1. We use a simple query that will always work, searching only for the unique token.
+              const txQuery = db.collection('transactions').where('accessToken', '==', accessToken);
               const txSnapshot = await txQuery.get();
 
               if (txSnapshot.empty) {
-                  renderError('Access Denied', 'This access token is invalid or has not been approved.');
+                  renderError('Access Denied', 'This access token is invalid or has expired.');
                   return;
               }
 
-              // 2. Ensure the token matches the requested note
+              // 2. We now perform the security checks in the browser after getting the data.
               const transaction = txSnapshot.docs[0].data();
-              if (transaction.noteId !== noteId) {
-                  renderError('Access Denied', 'This access token is not valid for this note.');
+              if (transaction.status !== 'approved') {
+                  renderError('Access Denied', 'This transaction has not been approved.');
                   return;
               }
 
-              // 3. If everything is valid, fetch and render the note
+              if (transaction.noteId !== noteId) {
+                  renderError('Access Denied', 'This access token is not valid for this specific note.');
+                  return;
+              }
+
+              // 3. If all checks pass, we fetch and render the note.
               const noteDoc = await db.collection('notes').doc(noteId).get();
               if (noteDoc.exists) {
                   renderNote(noteDoc.data());
@@ -115,7 +120,7 @@
               }
 
           } catch (error) {
-              console.error("Error loading note:", error);
+              console.error("Critical Error loading note:", error);
               renderError('An Error Occurred', 'We could not load the note at this time. Please try again later.');
           }
       }
