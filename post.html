@@ -11,16 +11,27 @@
         body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; }
         h1, h2, h3 { font-family: 'Lora', serif; }
         .prose { max-width: 65ch; margin-left: auto; margin-right: auto; }
-        .prose h1 { font-size: 2.25rem; line-height: 2.5rem; }
+        .prose h1 { font-size: 2.5rem; line-height: 2.75rem; }
         .prose p, .prose ul, .prose ol { line-height: 1.75; }
         .form-input { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; }
         .interaction-btn:disabled { color: #9ca3af; cursor: not-allowed; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased">
-    <header class="bg-white/90 backdrop-blur-lg shadow-sm"><nav class="container mx-auto px-6 py-4 flex justify-between items-center"><a href="index.html" class="text-2xl font-extrabold text-slate-900 tracking-tight">Shifat S. Siam</a><a href="index.html#blog" class="font-bold text-emerald-600 hover:text-emerald-700">&larr; Back to All Articles</a></nav></header>
-    <main id="post-container" class="container mx-auto px-6 py-12 md:py-20"><div id="loading-post" class="text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl"></i><p class="mt-2">Loading article...</p></div></main>
-    <footer class="bg-slate-900 text-slate-400 text-sm mt-16"><div class="container mx-auto text-center p-6"><p>&copy; 2025 Shifat Shahriar Siam. All Rights Reserved.</p></div></footer>
+    <header class="bg-white/90 backdrop-blur-lg shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-extrabold text-slate-900 tracking-tight">Shifat S. Siam</a>
+            <a href="index.html#blog" class="font-bold text-emerald-600 hover:text-emerald-700">&larr; Back to All Articles</a>
+        </nav>
+    </header>
+
+    <main id="post-container" class="container mx-auto px-6 py-12 md:py-20">
+        <div id="loading-post" class="text-center text-slate-500"><i class="fas fa-spinner fa-spin text-3xl"></i><p class="mt-2">Loading article...</p></div>
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 text-sm mt-16">
+        <div class="container mx-auto text-center p-6"><p>&copy; 2025 Shifat Shahriar Siam. All Rights Reserved.</p></div>
+    </footer>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
@@ -33,7 +44,6 @@
       const loadingMessage = document.getElementById('loading-post');
       const urlParams = new URLSearchParams(window.location.search);
       const postId = urlParams.get('id');
-
       const docRef = postId ? db.collection('posts').doc(postId) : null;
       
       function renderPost(post) {
@@ -42,19 +52,26 @@
           const votedPosts = JSON.parse(localStorage.getItem('voted_posts')) || {};
           const hasVoted = votedPosts[postId];
           loadingMessage.style.display = 'none';
+          
           postContainer.innerHTML = `
             <article class="prose bg-white p-8 md:p-12 rounded-lg shadow-lg">
-                <h1 class="!text-4xl font-black text-slate-900 !mb-2">${post.title}</h1>
-                <p class="text-slate-500 !mt-0">Published on ${date}</p>
+                <h1 class="!text-4xl font-black text-slate-900 !mb-4">${post.title}</h1>
+                <div class="flex items-center space-x-4 mb-8">
+                    <a href="index.html#about"><img src="https://i.postimg.cc/L8ZwDSn5/IMG-20250112-145354-650.webp" alt="Author photo" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-500/50"></a>
+                    <div>
+                        <a href="index.html#about" class="font-bold text-slate-800 hover:text-emerald-600">S.S. Siam</a>
+                        <p class="text-sm text-slate-500 !m-0">Published on ${date}</p>
+                    </div>
+                </div>
+                ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Cover for ${post.title}" class="rounded-lg shadow-md my-8">` : ''}
+                <div class="prose-content">${post.content}</div>
                 <div class="my-6 py-4 border-y flex justify-between items-center text-slate-500">
                    <div class="flex items-center space-x-6">
                         <button data-action="like" class="interaction-btn flex items-center space-x-1.5 hover:text-emerald-500" ${hasVoted ? 'disabled' : ''}><i class="far fa-thumbs-up"></i><span>${post.likes || 0}</span></button>
                         <button data-action="dislike" class="interaction-btn flex items-center space-x-1.5 hover:text-red-500" ${hasVoted ? 'disabled' : ''}><i class="far fa-thumbs-down"></i><span>${post.dislikes || 0}</span></button>
                    </div>
-                   <span class="flex items-center"><i class="far fa-eye mr-2"></i> ${post.views || 0}</span>
+                   <span class="flex items-center"><i class="far fa-eye mr-2"></i> ${post.views || 0} Views</span>
                 </div>
-                ${post.imageUrl ? `<img src="${post.imageUrl}" alt="Cover for ${post.title}" class="rounded-lg shadow-md my-8">` : ''}
-                <div class="prose-content">${post.content}</div>
             </article>
             <div id="comments-section" class="max-w-3xl mx-auto mt-12"></div>
           `;
