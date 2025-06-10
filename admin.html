@@ -101,15 +101,13 @@
 
       // --- AUTH & NAV ---
       auth.onAuthStateChanged(user => {
-        const loginContainer = document.getElementById('login-container');
-        const appLayout = document.getElementById('app-layout');
         if (user) {
-            loginContainer.classList.add('hidden');
-            appLayout.classList.remove('hidden');
+            document.getElementById('app-layout').classList.remove('hidden');
+            document.getElementById('login-container').classList.add('hidden');
             loadAllAdminData();
         } else {
-            loginContainer.classList.remove('hidden');
-            appLayout.classList.add('hidden');
+            document.getElementById('app-layout').classList.add('hidden');
+            document.getElementById('login-container').classList.remove('hidden');
         }
       });
       document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.'); });
@@ -149,15 +147,14 @@
               const tableBody = document.getElementById('posts-table-body');
               if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No posts yet.</td></tr>`; return; }
               tableBody.innerHTML = snapshot.docs.map(doc => { const d = doc.data(); const date = d.createdAt?.toDate().toLocaleDateString() || 'N/A'; return `<tr><td class="p-3">${d.title}</td><td class="p-3">${date}</td><td class="p-3 text-right space-x-2"><button onclick="handleEdit('${doc.id}')" class="btn btn-secondary text-sm">Edit</button><button onclick="openConfirmationModal('${doc.id}', 'post')" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
-          });
+          }, error => { console.error("Error loading blog posts:", error); document.getElementById('posts-table-body').innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-500">Error loading posts.</td></tr>`; });
       }
       async function handleEdit(id) {
           document.querySelector('a[href="#blog"]').click();
           const doc = await db.collection('posts').doc(id).get();
           if (!doc.exists) return;
           const post = doc.data();
-          document.getElementById('post-id').value = id; document.getElementById('post-title').value = post.title; document.getElementById('post-image-url').value = post.imageUrl;
-          tinymce.get('post-content').setContent(post.content);
+          document.getElementById('post-id').value = id; document.getElementById('post-title').value = post.title; document.getElementById('post-image-url').value = post.imageUrl; tinymce.get('post-content').setContent(post.content);
           document.getElementById('form-title').textContent = 'Edit Post'; document.getElementById('publish-post-button').textContent = 'Update Post'; document.getElementById('cancel-edit-button').classList.remove('hidden');
           window.scrollTo(0,0);
       }
@@ -169,14 +166,14 @@
           const tableBody = document.getElementById('comments-table-body');
           db.collectionGroup('comments').onSnapshot(async snapshot => {
               if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No comments yet.</td></tr>`; return; }
-              let commentsData = await Promise.all(snapshot.docs.map(async doc => {
+              let commentsPromises = snapshot.docs.map(async doc => {
                   try {
                       const comment = doc.data();
                       const postSnap = await doc.ref.parent.parent.get();
                       return { ...comment, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
                   } catch (e) { return null; }
-              }));
-              commentsData = commentsData.filter(c => c !== null); // Filter out any errors
+              });
+              let commentsData = (await Promise.all(commentsPromises)).filter(c => c);
               commentsData.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
               tableBody.innerHTML = commentsData.map(c => `<tr><td class="p-3">${c.text}</td><td class="p-3">${c.name}</td><td class="p-3">${c.postTitle}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${c.path}', 'comment')" class="btn btn-danger text-sm">Delete</button></td></tr>`).join('');
           }, error => { console.error("Error loading comments:", error); tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading comments.</td></tr>`; });
@@ -193,7 +190,7 @@
               const tableBody = document.getElementById('notes-table-body');
               if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No notes added yet.</td></tr>`; return; }
               tableBody.innerHTML = snapshot.docs.map(doc => { const d = doc.data(); return `<tr><td class="p-3">${d.title}</td><td class="p-3">৳${d.price}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${doc.id}', 'note')" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
-          });
+          }, error => { console.error("Error loading notes:", error); document.getElementById('notes-table-body').innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-500">Error loading notes.</td></tr>`; });
       }
 
       // --- TRANSACTION MANAGEMENT (DEFINITIVE FIX) ---
@@ -214,9 +211,10 @@
               tableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction(this, '${tx.id}', '${tx.noteId}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction(this, '${tx.id}', null, 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
           }, error => {
               console.error("Error loading transactions:", error);
-              tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data.</td></tr>`;
+              tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading transactions.</td></tr>`;
           });
       }
+
       async function handleTransaction(button, transactionId, noteId, status) {
           button.disabled = true; const originalText = button.textContent; button.textContent = 'Processing...';
           if (!confirm(`Are you sure you want to ${status} this transaction?`)) { button.disabled = false; button.textContent = originalText; return; }
