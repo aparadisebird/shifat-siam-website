@@ -101,16 +101,15 @@
 
       // --- AUTH & NAV ---
       auth.onAuthStateChanged(user => {
+        const loginContainer = document.getElementById('login-container');
+        const appLayout = document.getElementById('app-layout');
         if (user) {
-            document.getElementById('app-layout').classList.remove('hidden');
-            document.getElementById('login-container').classList.add('hidden');
-            loadBlogPosts();
-            loadComments();
-            loadNotes();
-            loadTransactions();
+            loginContainer.classList.add('hidden');
+            appLayout.classList.remove('hidden');
+            loadAllAdminData();
         } else {
-            document.getElementById('app-layout').classList.add('hidden');
-            document.getElementById('login-container').classList.remove('hidden');
+            loginContainer.classList.remove('hidden');
+            appLayout.classList.add('hidden');
         }
       });
       document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.'); });
@@ -129,7 +128,22 @@
           }
       });
 
-      // --- ALL LOAD FUNCTIONS ---
+      // --- MASTER DATA LOADER ---
+      function loadAllAdminData() {
+        loadBlogPosts();
+        loadComments();
+        loadNotes();
+        loadTransactions();
+      }
+
+      // --- BLOG MANAGEMENT ---
+      const blogForm = document.getElementById('blog-post-form');
+      blogForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('post-id').value;
+        const postData = { title: document.getElementById('post-title').value, content: tinymce.get('post-content').getContent(), imageUrl: document.getElementById('post-image-url').value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+        try { if (id) { await db.collection('posts').doc(id).update(postData); } else { postData.createdAt = firebase.firestore.FieldValue.serverTimestamp(); postData.views = 0; postData.likes = 0; postData.dislikes = 0; await db.collection('posts').add(postData); } resetForm(); } catch (error) { console.error("Error saving post: ", error); }
+      });
       function loadBlogPosts() {
           db.collection('posts').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
               const tableBody = document.getElementById('posts-table-body');
@@ -137,19 +151,43 @@
               tableBody.innerHTML = snapshot.docs.map(doc => { const d = doc.data(); const date = d.createdAt?.toDate().toLocaleDateString() || 'N/A'; return `<tr><td class="p-3">${d.title}</td><td class="p-3">${date}</td><td class="p-3 text-right space-x-2"><button onclick="handleEdit('${doc.id}')" class="btn btn-secondary text-sm">Edit</button><button onclick="openConfirmationModal('${doc.id}', 'post')" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
           });
       }
+      async function handleEdit(id) {
+          document.querySelector('a[href="#blog"]').click();
+          const doc = await db.collection('posts').doc(id).get();
+          if (!doc.exists) return;
+          const post = doc.data();
+          document.getElementById('post-id').value = id; document.getElementById('post-title').value = post.title; document.getElementById('post-image-url').value = post.imageUrl;
+          tinymce.get('post-content').setContent(post.content);
+          document.getElementById('form-title').textContent = 'Edit Post'; document.getElementById('publish-post-button').textContent = 'Update Post'; document.getElementById('cancel-edit-button').classList.remove('hidden');
+          window.scrollTo(0,0);
+      }
+      function resetForm() { blogForm.reset(); tinymce.get('post-content').setContent(''); document.getElementById('post-id').value = ''; document.getElementById('form-title').textContent = 'Create New Post'; document.getElementById('publish-post-button').textContent = 'Publish Post'; document.getElementById('cancel-edit-button').classList.add('hidden'); }
+      document.getElementById('cancel-edit-button').addEventListener('click', resetForm);
+
+      // --- COMMENT MANAGEMENT (DEFINITIVE FIX) ---
       function loadComments() {
+          const tableBody = document.getElementById('comments-table-body');
           db.collectionGroup('comments').onSnapshot(async snapshot => {
-              const tableBody = document.getElementById('comments-table-body');
               if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No comments yet.</td></tr>`; return; }
               let commentsData = await Promise.all(snapshot.docs.map(async doc => {
-                  const comment = doc.data();
-                  const postSnap = await doc.ref.parent.parent.get();
-                  return { ...comment, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
+                  try {
+                      const comment = doc.data();
+                      const postSnap = await doc.ref.parent.parent.get();
+                      return { ...comment, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
+                  } catch (e) { return null; }
               }));
+              commentsData = commentsData.filter(c => c !== null); // Filter out any errors
               commentsData.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
               tableBody.innerHTML = commentsData.map(c => `<tr><td class="p-3">${c.text}</td><td class="p-3">${c.name}</td><td class="p-3">${c.postTitle}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${c.path}', 'comment')" class="btn btn-danger text-sm">Delete</button></td></tr>`).join('');
-          });
+          }, error => { console.error("Error loading comments:", error); tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading comments.</td></tr>`; });
       }
+
+      // --- NOTES MANAGEMENT ---
+      const noteForm = document.getElementById('note-form');
+      noteForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          try { await db.collection('notes').add({ title: document.getElementById('note-title').value, description: document.getElementById('note-description').value, price: Number(document.getElementById('note-price').value), gdocLink: document.getElementById('note-gdoc-link').value, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); noteForm.reset(); } catch (error) { console.error("Error adding note: ", error); }
+      });
       function loadNotes() {
           db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
               const tableBody = document.getElementById('notes-table-body');
@@ -157,6 +195,8 @@
               tableBody.innerHTML = snapshot.docs.map(doc => { const d = doc.data(); return `<tr><td class="p-3">${d.title}</td><td class="p-3">৳${d.price}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${doc.id}', 'note')" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
           });
       }
+
+      // --- TRANSACTION MANAGEMENT (DEFINITIVE FIX) ---
       function loadTransactions() {
           const tableBody = document.getElementById('transactions-table-body');
           db.collection('transactions').onSnapshot(async snapshot => {
@@ -177,36 +217,9 @@
               tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data.</td></tr>`;
           });
       }
-
-      // --- ALL "HANDLE" FUNCTIONS ---
-      const blogPostForm = document.getElementById('blog-post-form');
-      blogPostForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        const id = document.getElementById('post-id').value;
-        const postData = { title: document.getElementById('post-title').value, content: tinymce.get('post-content').getContent(), imageUrl: document.getElementById('post-image-url').value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-        try { if (id) { await db.collection('posts').doc(id).update(postData); } else { postData.createdAt = firebase.firestore.FieldValue.serverTimestamp(); postData.views = 0; postData.likes = 0; postData.dislikes = 0; await db.collection('posts').add(postData); } resetForm(); } catch (error) { console.error("Error saving post: ", error); }
-      });
-      async function handleEdit(id) {
-          document.querySelector('a[href="#blog"]').click();
-          const doc = await db.collection('posts').doc(id).get();
-          if (!doc.exists) return;
-          const post = doc.data();
-          document.getElementById('post-id').value = id; document.getElementById('post-title').value = post.title; document.getElementById('post-image-url').value = post.imageUrl; tinymce.get('post-content').setContent(post.content);
-          document.getElementById('form-title').textContent = 'Edit Post'; document.getElementById('publish-post-button').textContent = 'Update Post'; document.getElementById('cancel-edit-button').classList.remove('hidden');
-          window.scrollTo(0,0);
-      }
-      function resetForm() { blogPostForm.reset(); tinymce.get('post-content').setContent(''); document.getElementById('post-id').value = ''; document.getElementById('form-title').textContent = 'Create New Post'; document.getElementById('publish-post-button').textContent = 'Publish Post'; document.getElementById('cancel-edit-button').classList.add('hidden'); }
-      document.getElementById('cancel-edit-button').addEventListener('click', resetForm);
-
-      const noteForm = document.getElementById('note-form');
-      noteForm.addEventListener('submit', async e => {
-          e.preventDefault();
-          try { await db.collection('notes').add({ title: document.getElementById('note-title').value, description: document.getElementById('note-description').value, price: Number(document.getElementById('note-price').value), gdocLink: document.getElementById('note-gdoc-link').value, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); noteForm.reset(); } catch (error) { console.error("Error adding note: ", error); }
-      });
-
       async function handleTransaction(button, transactionId, noteId, status) {
-          button.disabled = true; button.textContent = 'Processing...';
-          if (!confirm(`Are you sure you want to ${status} this transaction?`)) { button.disabled = false; button.textContent = status.charAt(0).toUpperCase() + status.slice(1); return; }
+          button.disabled = true; const originalText = button.textContent; button.textContent = 'Processing...';
+          if (!confirm(`Are you sure you want to ${status} this transaction?`)) { button.disabled = false; button.textContent = originalText; return; }
           try {
               if (status === 'approved') {
                   const accessToken = Math.random().toString(36).substring(2, 15);
@@ -217,10 +230,11 @@
                   linkTextarea.value = accessLink;
                   linkContainer.classList.remove('hidden');
               } else { await db.collection('transactions').doc(transactionId).update({ status: 'rejected', processedAt: firebase.firestore.FieldValue.serverTimestamp() }); }
-          } catch (error) { console.error(`Error updating transaction:`, error); alert('An error occurred.'); button.disabled = false; button.textContent = status.charAt(0).toUpperCase() + status.slice(1); }
+          } catch (error) { console.error(`Error updating transaction:`, error); alert('An error occurred.'); button.disabled = false; button.textContent = originalText; }
       }
       document.getElementById('copy-link-button').addEventListener('click', () => { document.getElementById('access-link-textarea').select(); document.execCommand('copy'); });
 
+      // --- CONFIRMATION MODAL & DELETION ---
       const modal = document.getElementById('confirmation-modal');
       let itemToDelete = { id: null, type: null };
       function openConfirmationModal(idOrPath, type) { itemToDelete = { id: idOrPath, type: type }; modal.classList.remove('hidden'); modal.classList.add('flex'); }
