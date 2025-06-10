@@ -106,17 +106,23 @@
 
       // --- AUTH & NAV ---
       auth.onAuthStateChanged(user => {
+        const loginContainer = document.getElementById('login-container');
+        const appLayout = document.getElementById('app-layout');
         if (user) {
-            document.getElementById('app-layout').classList.remove('hidden');
-            document.getElementById('login-container').classList.add('hidden');
-            loadBlogPosts(); loadComments(); loadNotes(); loadTransactions();
+            loginContainer.classList.add('hidden');
+            appLayout.classList.remove('hidden');
+            loadBlogPosts();
+            loadComments();
+            loadNotes();
+            loadTransactions();
         } else {
-            document.getElementById('app-layout').classList.add('hidden');
-            document.getElementById('login-container').classList.remove('hidden');
+            loginContainer.classList.remove('hidden');
+            appLayout.classList.add('hidden');
         }
       });
       document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.'); });
       document.getElementById('signout-button').addEventListener('click', () => auth.signOut());
+      
       const sidebarNav = document.getElementById('sidebar-nav');
       sidebarNav.addEventListener('click', (e) => {
           const link = e.target.closest('a');
@@ -130,11 +136,80 @@
           }
       });
 
+      // --- BLOG MANAGEMENT ---
+      const blogForm = document.getElementById('blog-post-form');
+      blogForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('post-id').value;
+        const postData = { title: document.getElementById('post-title').value, content: tinymce.get('post-content').getContent(), imageUrl: document.getElementById('post-image-url').value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+        try {
+            if (id) { await db.collection('posts').doc(id).update(postData); }
+            else { postData.createdAt = firebase.firestore.FieldValue.serverTimestamp(); postData.views = 0; postData.likes = 0; postData.dislikes = 0; await db.collection('posts').add(postData); }
+            resetForm();
+        } catch (error) { console.error("Error saving post: ", error); }
+      });
+      
+      function loadBlogPosts() {
+          db.collection('posts').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+              const postsTableBody = document.getElementById('posts-table-body');
+              if (snapshot.empty) { postsTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No posts yet.</td></tr>`; return; }
+              postsTableBody.innerHTML = snapshot.docs.map(doc => { const post = doc.data(); const date = post.createdAt?.toDate().toLocaleDateString() || 'N/A'; return `<tr><td class="p-3">${post.title}</td><td class="p-3">${date}</td><td class="p-3 text-right space-x-2"><button onclick="handleEdit('${doc.id}')" class="btn btn-secondary text-sm">Edit</button><button onclick="openConfirmationModal('${doc.id}', 'post')" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
+          });
+      }
+      
+      async function handleEdit(id) {
+          document.querySelector('a[href="#blog"]').click();
+          const doc = await db.collection('posts').doc(id).get();
+          if (!doc.exists) return;
+          const post = doc.data();
+          document.getElementById('post-id').value = id; document.getElementById('post-title').value = post.title; document.getElementById('post-image-url').value = post.imageUrl;
+          tinymce.get('post-content').setContent(post.content);
+          document.getElementById('form-title').textContent = 'Edit Post'; document.getElementById('publish-post-button').textContent = 'Update Post'; document.getElementById('cancel-edit-button').classList.remove('hidden');
+          window.scrollTo(0,0);
+      }
+      
+      function resetForm() {
+          blogForm.reset(); tinymce.get('post-content').setContent(''); document.getElementById('post-id').value = '';
+          document.getElementById('form-title').textContent = 'Create New Post'; document.getElementById('publish-post-button').textContent = 'Publish Post'; document.getElementById('cancel-edit-button').classList.add('hidden');
+      }
+      document.getElementById('cancel-edit-button').addEventListener('click', resetForm);
+
+      // --- COMMENT MANAGEMENT (FIXED) ---
+      function loadComments() {
+          db.collectionGroup('comments').onSnapshot(async snapshot => {
+              const commentsTableBody = document.getElementById('comments-table-body');
+              if (snapshot.empty) { commentsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No comments yet.</td></tr>`; return; }
+              let commentsData = await Promise.all(snapshot.docs.map(async doc => {
+                  const comment = doc.data();
+                  const postRef = doc.ref.parent.parent;
+                  const postSnap = await postRef.get();
+                  return { ...comment, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
+              }));
+              commentsData.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+              commentsTableBody.innerHTML = commentsData.map(c => `<tr><td class="p-3">${c.text}</td><td class="p-3">${c.name}</td><td class="p-3">${c.postTitle}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${c.path}', 'comment')" class="btn btn-danger text-sm">Delete</button></td></tr>`).join('');
+          });
+      }
+
+      // --- NOTES MANAGEMENT ---
+      const noteForm = document.getElementById('note-form');
+      noteForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          try {
+              await db.collection('notes').add({ title: document.getElementById('note-title').value, description: document.getElementById('note-description').value, price: Number(document.getElementById('note-price').value), gdocLink: document.getElementById('note-gdoc-link').value, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+              noteForm.reset();
+          } catch (error) { console.error("Error adding note: ", error); }
+      });
+      function loadNotes() {
+          db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+              const notesTableBody = document.getElementById('notes-table-body');
+              if (snapshot.empty) { notesTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No notes added yet.</td></tr>`; return; }
+              notesTableBody.innerHTML = snapshot.docs.map(doc => { const note = doc.data(); return `<tr><td class="p-3">${note.title}</td><td class="p-3">৳${note.price}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${doc.id}', 'note')" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
+          });
+      }
+
       // --- TRANSACTION MANAGEMENT (DEFINITIVE FIX) ---
       function loadTransactions() {
           const transactionsTableBody = document.getElementById('transactions-table-body');
-          // **THE FIX:** We fetch ALL transactions and filter for "pending" ones in the browser.
-          // This method is robust and does not require a special database index.
           db.collection('transactions').onSnapshot(async snapshot => {
               const allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
               const pendingTransactions = allTransactions.filter(tx => tx.status === 'pending');
@@ -146,19 +221,19 @@
               
               const transactionData = await Promise.all(pendingTransactions.map(async tx => {
                   const noteSnap = await db.collection('notes').doc(tx.noteId).get();
-                  return { ...tx, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note', gdocLink: noteSnap.exists() ? noteSnap.data().gdocLink : null };
+                  return { ...tx, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
               }));
               
-              transactionData.sort((a, b) => (a.submittedAt?.toDate() || 0) - (b.submittedAt?.toDate() || 0)); // Oldest first
+              transactionData.sort((a, b) => (a.submittedAt?.toDate() || 0) - (b.submittedAt?.toDate() || 0));
 
-              transactionsTableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction(this, '${tx.id}', '${tx.noteId}', '${tx.gdocLink}', '${tx.userEmail}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction(this, '${tx.id}', null, null, null, 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
+              transactionsTableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction(this, '${tx.id}', '${tx.noteId}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction(this, '${tx.id}', null, 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
           }, error => {
               console.error("Error loading transactions:", error);
               transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data.</td></tr>`;
           });
       }
 
-      async function handleTransaction(button, transactionId, noteId, gdocLink, userEmail, status) {
+      async function handleTransaction(button, transactionId, noteId, status) {
           button.disabled = true;
           const originalText = button.textContent;
           button.textContent = 'Processing...';
@@ -197,20 +272,20 @@
           document.execCommand('copy');
       });
 
-      // --- ALL OTHER MANAGEMENT FUNCTIONS (Blog, Comments, Notes, Modal) ---
-      // These are complete and unchanged from the last correct version.
-      function loadBlogPosts() { /* ... */ }
-      async function handleEdit(id) { /* ... */ }
-      function resetForm() { /* ... */ }
-      function loadComments() { /* ... */ }
-      const noteForm = document.getElementById('note-form');
-      noteForm.addEventListener('submit', async e => { /* ... */ });
-      function loadNotes() { /* ... */ }
+      // --- CONFIRMATION MODAL & DELETION ---
       const modal = document.getElementById('confirmation-modal');
       let itemToDelete = { id: null, type: null };
-      function openConfirmationModal(idOrPath, type) { /* ... */ }
-      document.getElementById('modal-cancel').addEventListener('click', () => { /* ... */ });
-      document.getElementById('modal-confirm').addEventListener('click', async () => { /* ... */ });
+      function openConfirmationModal(idOrPath, type) { itemToDelete = { id: idOrPath, type: type }; modal.classList.remove('hidden'); modal.classList.add('flex'); }
+      document.getElementById('modal-cancel').addEventListener('click', () => { modal.classList.add('hidden'); modal.classList.remove('flex'); itemToDelete = { id: null, type: null }; });
+      document.getElementById('modal-confirm').addEventListener('click', async () => {
+          if (!itemToDelete.id) return;
+          try {
+              if (itemToDelete.type === 'post') { await db.collection('posts').doc(itemToDelete.id).delete(); }
+              else if (itemToDelete.type === 'comment') { await db.doc(itemToDelete.id).delete(); }
+              else if (itemToDelete.type === 'note') { await db.collection('notes').doc(itemToDelete.id).delete(); }
+          } catch (error) { console.error("Error deleting item: ", error); }
+          document.getElementById('modal-cancel').click();
+      });
     </script>
 </body>
 </html>
