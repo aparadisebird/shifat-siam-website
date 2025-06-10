@@ -199,19 +199,23 @@
           });
       }
 
-      // --- TRANSACTION MANAGEMENT (FIXED) ---
+      // --- TRANSACTION MANAGEMENT (DEFINITIVE FIX) ---
       function loadTransactions() {
           const transactionsTableBody = document.getElementById('transactions-table-body');
-          db.collection('transactions').where('status', '==', 'pending')
-            .onSnapshot(async snapshot => {
-              if (snapshot.empty) {
+          // **THE FIX:** Fetch all transactions first, THEN filter for pending ones in the code.
+          // This avoids complex queries that require a special index.
+          db.collection('transactions').onSnapshot(async snapshot => {
+              const allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              const pendingTransactions = allTransactions.filter(tx => tx.status === 'pending');
+
+              if (pendingTransactions.length === 0) {
                   transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending transactions.</td></tr>`;
                   return;
               }
-              let transactionData = await Promise.all(snapshot.docs.map(async doc => {
-                  const tx = doc.data();
+              
+              const transactionData = await Promise.all(pendingTransactions.map(async tx => {
                   const noteSnap = await db.collection('notes').doc(tx.noteId).get();
-                  return { ...tx, id: doc.id, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
+                  return { ...tx, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
               }));
               
               transactionData.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0));
@@ -219,7 +223,7 @@
               transactionsTableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction('${tx.id}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction('${tx.id}', 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
           }, error => {
               console.error("Error loading transactions:", error);
-              transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data. Please check console for details.</td></tr>`;
+              transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data.</td></tr>`;
           });
       }
       async function handleTransaction(id, status) {
