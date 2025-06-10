@@ -68,13 +68,7 @@
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Notes Store Management</h1>
                     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
                         <h2 class="text-2xl font-bold mb-4">Add New Note</h2>
-                        <form id="note-form" class="space-y-4">
-                            <input type="text" id="note-title" class="form-input" placeholder="Note Title" required>
-                            <textarea id="note-description" rows="3" class="form-input" placeholder="Brief Description..." required></textarea>
-                            <input type="number" id="note-price" class="form-input" placeholder="Price (e.g., 250)" required>
-                            <input type="url" id="note-gdoc-link" class="form-input" placeholder="Google Doc 'Share' Link" required>
-                            <div class="flex justify-end"><button type="submit" class="btn btn-primary">Add Note</button></div>
-                        </form>
+                        <form id="note-form" class="space-y-4"><input type="text" id="note-title" class="form-input" placeholder="Note Title" required><textarea id="note-description" rows="3" class="form-input" placeholder="Brief Description..." required></textarea><input type="number" id="note-price" class="form-input" placeholder="Price (e.g., 250)" required><input type="url" id="note-gdoc-link" class="form-input" placeholder="Google Doc 'Share' Link" required><div class="flex justify-end"><button type="submit" class="btn btn-primary">Add Note</button></div></form>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-md"><h2 class="text-2xl font-bold mb-4">Listed Notes</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr><th class="p-3">Title</th><th class="p-3">Price</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="notes-table-body"></tbody></table></div></div>
                 </section>
@@ -121,11 +115,7 @@
             appLayout.classList.add('hidden');
         }
       });
-      document.getElementById('login-form').addEventListener('submit', e => {
-        e.preventDefault();
-        auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value)
-          .catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.');
-      });
+      document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.'); });
       document.getElementById('signout-button').addEventListener('click', () => auth.signOut());
 
       // --- NAVIGATION ---
@@ -144,27 +134,60 @@
 
       // --- BLOG MANAGEMENT ---
       const blogForm = document.getElementById('blog-post-form');
-      blogForm.addEventListener('submit', async e => { /* ... (blog form logic) ... */ });
-      function loadBlogPosts() { /* ... (load blog posts logic) ... */ }
-      async function handleEdit(id) { /* ... (edit blog post logic) ... */ }
-      function resetForm() { /* ... (reset blog form logic) ... */ }
+      blogForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('post-id').value;
+        const postData = { title: document.getElementById('post-title').value, content: tinymce.get('post-content').getContent(), imageUrl: document.getElementById('post-image-url').value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+        try {
+            if (id) { await db.collection('posts').doc(id).update(postData); }
+            else { postData.createdAt = firebase.firestore.FieldValue.serverTimestamp(); postData.views = 0; postData.likes = 0; postData.dislikes = 0; await db.collection('posts').add(postData); }
+            resetForm();
+        } catch (error) { console.error("Error saving post: ", error); }
+      });
+      function loadBlogPosts() {
+          db.collection('posts').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+              const postsTableBody = document.getElementById('posts-table-body');
+              if (snapshot.empty) { postsTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No posts yet.</td></tr>`; return; }
+              postsTableBody.innerHTML = snapshot.docs.map(doc => { const post = doc.data(); const date = post.createdAt?.toDate().toLocaleDateString() || 'N/A'; return `<tr><td class="p-3">${post.title}</td><td class="p-3">${date}</td><td class="p-3 text-right space-x-2"><button onclick="handleEdit('${doc.id}')" class="btn btn-secondary text-sm">Edit</button><button onclick="openConfirmationModal('${doc.id}', 'post')"" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
+          });
+      }
+      async function handleEdit(id) {
+          document.querySelector('a[href="#blog"]').click();
+          const doc = await db.collection('posts').doc(id).get();
+          if (!doc.exists) return;
+          const post = doc.data();
+          document.getElementById('post-id').value = id; document.getElementById('post-title').value = post.title; document.getElementById('post-image-url').value = post.imageUrl;
+          tinymce.get('post-content').setContent(post.content);
+          document.getElementById('form-title').textContent = 'Edit Post'; document.getElementById('publish-post-button').textContent = 'Update Post'; document.getElementById('cancel-edit-button').classList.remove('hidden');
+          window.scrollTo(0,0);
+      }
+      function resetForm() {
+          blogForm.reset(); tinymce.get('post-content').setContent(''); document.getElementById('post-id').value = '';
+          document.getElementById('form-title').textContent = 'Create New Post'; document.getElementById('publish-post-button').textContent = 'Publish Post'; document.getElementById('cancel-edit-button').classList.add('hidden');
+      }
       document.getElementById('cancel-edit-button').addEventListener('click', resetForm);
 
       // --- COMMENT MANAGEMENT ---
-      function loadComments() { /* ... (load comments logic) ... */ }
+      function loadComments() {
+          db.collectionGroup('comments').orderBy('createdAt', 'desc').onSnapshot(async snapshot => {
+              const commentsTableBody = document.getElementById('comments-table-body');
+              if (snapshot.empty) { commentsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No comments yet.</td></tr>`; return; }
+              const commentsData = await Promise.all(snapshot.docs.map(async doc => {
+                  const comment = doc.data();
+                  const postRef = doc.ref.parent.parent;
+                  const postSnap = await postRef.get();
+                  return { ...comment, id: doc.id, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
+              }));
+              commentsTableBody.innerHTML = commentsData.map(c => `<tr><td class="p-3">${c.text}</td><td class="p-3">${c.name}</td><td class="p-3">${c.postTitle}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${c.path}', 'comment')" class="btn btn-danger text-sm">Delete</button></td></tr>`).join('');
+          });
+      }
 
       // --- NOTES MANAGEMENT ---
       const noteForm = document.getElementById('note-form');
       noteForm.addEventListener('submit', async e => {
           e.preventDefault();
           try {
-              await db.collection('notes').add({
-                  title: document.getElementById('note-title').value,
-                  description: document.getElementById('note-description').value,
-                  price: Number(document.getElementById('note-price').value),
-                  gdocLink: document.getElementById('note-gdoc-link').value,
-                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
+              await db.collection('notes').add({ title: document.getElementById('note-title').value, description: document.getElementById('note-description').value, price: Number(document.getElementById('note-price').value), gdocLink: document.getElementById('note-gdoc-link').value, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
               noteForm.reset();
           } catch (error) { console.error("Error adding note: ", error); }
       });
@@ -172,36 +195,42 @@
           db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
               const notesTableBody = document.getElementById('notes-table-body');
               if (snapshot.empty) { notesTableBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No notes added yet.</td></tr>`; return; }
-              notesTableBody.innerHTML = snapshot.docs.map(doc => {
-                  const note = doc.data();
-                  return `<tr><td class="p-3">${note.title}</td><td class="p-3">৳${note.price}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${doc.id}', 'note')" class="btn btn-danger text-sm">Delete</button></td></tr>`;
-              }).join('');
+              notesTableBody.innerHTML = snapshot.docs.map(doc => { const note = doc.data(); return `<tr><td class="p-3">${note.title}</td><td class="p-3">৳${note.price}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${doc.id}', 'note')" class="btn btn-danger text-sm">Delete</button></td></tr>`; }).join('');
           });
       }
 
-      // --- TRANSACTION MANAGEMENT ---
+      // --- TRANSACTION MANAGEMENT (FIXED) ---
       function loadTransactions() {
-          db.collection('transactions').where('status', '==', 'pending').onSnapshot(async snapshot => {
-              const transactionsTableBody = document.getElementById('transactions-table-body');
-              if (snapshot.empty) { transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No pending transactions.</td></tr>`; return; }
+          const transactionsTableBody = document.getElementById('transactions-table-body');
+          // **THE FIX:** The query now correctly listens for pending transactions in real-time.
+          db.collection('transactions').where('status', '==', 'pending').orderBy('submittedAt', 'desc')
+            .onSnapshot(async snapshot => {
+              if (snapshot.empty) {
+                  transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending transactions.</td></tr>`;
+                  return;
+              }
               const transactionData = await Promise.all(snapshot.docs.map(async doc => {
                   const tx = doc.data();
                   const noteSnap = await db.collection('notes').doc(tx.noteId).get();
                   return { ...tx, id: doc.id, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
               }));
-              transactionsTableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3">${tx.noteTitle}</td><td class="p-3">${tx.userEmail}</td><td class="p-3">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction('${tx.id}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction('${tx.id}', 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
+              transactionsTableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction('${tx.id}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction('${tx.id}', 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
+          }, error => {
+              console.error("Error loading transactions:", error);
+              transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data.</td></tr>`;
           });
       }
       async function handleTransaction(id, status) {
+          if (!confirm(`Are you sure you want to ${status} this transaction?`)) return;
           try {
-              await db.collection('transactions').doc(id).update({ status: status });
+              await db.collection('transactions').doc(id).update({ status: status, processedAt: firebase.firestore.FieldValue.serverTimestamp() });
           } catch (error) { console.error(`Error updating transaction ${id} to ${status}:`, error); }
       }
 
       // --- CONFIRMATION MODAL & DELETION ---
       const modal = document.getElementById('confirmation-modal');
       let itemToDelete = { id: null, type: null };
-      function openConfirmationModal(id, type) { itemToDelete = { id, type }; modal.classList.remove('hidden'); modal.classList.add('flex'); }
+      function openConfirmationModal(idOrPath, type) { itemToDelete = { id: idOrPath, type: type }; modal.classList.remove('hidden'); modal.classList.add('flex'); }
       document.getElementById('modal-cancel').addEventListener('click', () => { modal.classList.add('hidden'); modal.classList.remove('flex'); itemToDelete = { id: null, type: null }; });
       document.getElementById('modal-confirm').addEventListener('click', async () => {
           if (!itemToDelete.id) return;
@@ -212,12 +241,6 @@
           } catch (error) { console.error("Error deleting item: ", error); }
           document.getElementById('modal-cancel').click();
       });
-
-      // --- Placeholder functions for brevity, the full logic is in the previous responses ---
-      function loadBlogPosts() { /* Implemented in previous versions */ }
-      async function handleEdit(id) { /* Implemented in previous versions */ }
-      function resetForm() { /* Implemented in previous versions */ }
-      function loadComments() { /* Implemented in previous versions */ }
     </script>
 </body>
 </html>
