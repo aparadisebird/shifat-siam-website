@@ -26,12 +26,10 @@
     </style>
 </head>
 <body class="antialiased">
-
     <!-- Login Screen -->
     <div id="login-container" class="flex items-center justify-center min-h-screen bg-slate-100">
         <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-lg shadow-xl"><h2 class="text-3xl font-extrabold text-center text-slate-900">Admin Panel</h2><form id="login-form" class="space-y-6"><input id="email" type="email" required class="form-input" placeholder="Email address"><input id="password" type="password" required class="form-input" placeholder="Password"><p id="error-message" class="text-red-500 text-sm h-4"></p><button type="submit" class="w-full btn bg-emerald-600 text-white py-3">Sign in</button></form></div>
     </div>
-
     <!-- Main Dashboard Layout -->
     <div id="app-layout" class="hidden">
         <div class="flex h-screen bg-slate-100">
@@ -47,22 +45,18 @@
                 </nav>
                 <div class="p-4 border-t border-slate-700"><button id="signout-button" class="sidebar-link w-full text-left"><i class="fas fa-sign-out-alt"></i>Sign Out</button></div>
             </aside>
-
             <!-- Main Content Area -->
             <main class="flex-1 overflow-y-auto p-8">
                 <section id="page-dashboard" class="content-page"><h1 class="text-4xl font-bold text-slate-800 mb-6">Dashboard</h1><p class="text-slate-600">Welcome! Use the sidebar to manage your content.</p></section>
-                
                 <section id="page-blog" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Blog Management</h1>
                     <div class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 id="form-title" class="text-2xl font-bold mb-4">Create New Post</h2><form id="blog-post-form" class="space-y-4"><input type="hidden" id="post-id"><input type="text" id="post-title" class="form-input" placeholder="Post Title" required><input type="url" id="post-image-url" class="form-input" placeholder="Cover Image URL (optional)"><textarea id="post-content" class="form-input"></textarea><div class="flex justify-end space-x-2"><button type="button" id="cancel-edit-button" class="btn bg-slate-500 text-white hidden">Cancel Edit</button><button type="submit" id="publish-post-button" class="btn btn-primary">Publish Post</button></div><p id="blog-message" class="text-sm h-4 mt-2"></p></form></div>
                     <div class="bg-white p-6 rounded-lg shadow-md"><h2 class="text-2xl font-bold mb-4">Published Posts</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-slate-200"><tr><th class="p-3">Title</th><th class="p-3">Created At</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="posts-table-body"></tbody></table></div></div>
                 </section>
-                
                 <section id="page-comments" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Comment Moderation</h1>
                     <div class="bg-white p-6 rounded-lg shadow-md"><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-slate-200"><tr><th class="p-3">Comment</th><th class="p-3">Author</th><th class="p-3">Post Title</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="comments-table-body"></tbody></table></div></div>
                 </section>
-                
                 <section id="page-notes" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Notes Store Management</h1>
                     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -71,7 +65,6 @@
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-md"><h2 class="text-2xl font-bold mb-4">Listed Notes</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr><th class="p-3">Title</th><th class="p-3">Price</th><th class="p-3 text-right">Actions</th></tr></thead><tbody id="notes-table-body"></tbody></table></div></div>
                 </section>
-
                 <section id="page-transactions" class="content-page hidden">
                     <h1 class="text-4xl font-bold text-slate-800 mb-6">Transaction Verification</h1>
                     <div id="access-link-container" class="hidden bg-emerald-100 border border-emerald-400 text-emerald-800 px-4 py-3 rounded-lg relative mb-6" role="alert"><strong class="font-bold">Approval Successful!</strong><span class="block sm:inline">Send this secure link to the user:</span><textarea id="access-link-textarea" class="w-full bg-emerald-50 mt-2 p-2 rounded" readonly></textarea><button id="copy-link-button" class="bg-emerald-600 text-white p-1 rounded text-sm mt-1">Copy Link</button></div>
@@ -83,7 +76,6 @@
             </main>
         </div>
     </div>
-    
     <!-- Confirmation Modal -->
     <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"><div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm"><h3 class="text-lg font-bold">Are you sure?</h3><p class="text-slate-600 my-2">This action cannot be undone.</p><div class="flex justify-end space-x-2 mt-4"><button id="modal-cancel" class="btn bg-slate-200 text-slate-800">Cancel</button><button id="modal-confirm" class="btn btn-danger">Delete</button></div></div></div>
 
@@ -96,23 +88,23 @@
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
-
       tinymce.init({ selector: '#post-content', height: 400, menubar: false, plugins: 'lists link image code', toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image | code' });
-
+      
       // --- AUTH & NAV ---
       auth.onAuthStateChanged(user => {
+        const loginContainer = document.getElementById('login-container');
+        const appLayout = document.getElementById('app-layout');
         if (user) {
-            document.getElementById('app-layout').classList.remove('hidden');
-            document.getElementById('login-container').classList.add('hidden');
+            loginContainer.classList.add('hidden');
+            appLayout.classList.remove('hidden');
             loadAllAdminData();
         } else {
-            document.getElementById('app-layout').classList.add('hidden');
-            document.getElementById('login-container').classList.remove('hidden');
+            loginContainer.classList.remove('hidden');
+            appLayout.classList.add('hidden');
         }
       });
       document.getElementById('login-form').addEventListener('submit', e => { e.preventDefault(); auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(err => document.getElementById('error-message').textContent = 'Invalid email or password.'); });
       document.getElementById('signout-button').addEventListener('click', () => auth.signOut());
-      
       const sidebarNav = document.getElementById('sidebar-nav');
       sidebarNav.addEventListener('click', (e) => {
           const link = e.target.closest('a');
@@ -161,22 +153,68 @@
       function resetForm() { blogForm.reset(); tinymce.get('post-content').setContent(''); document.getElementById('post-id').value = ''; document.getElementById('form-title').textContent = 'Create New Post'; document.getElementById('publish-post-button').textContent = 'Publish Post'; document.getElementById('cancel-edit-button').classList.add('hidden'); }
       document.getElementById('cancel-edit-button').addEventListener('click', resetForm);
 
-      // --- COMMENT MANAGEMENT (DEFINITIVE FIX) ---
+      // --- COMMENT MANAGEMENT (FIXED) ---
       function loadComments() {
           const tableBody = document.getElementById('comments-table-body');
-          db.collectionGroup('comments').onSnapshot(async snapshot => {
-              if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No comments yet.</td></tr>`; return; }
-              let commentsPromises = snapshot.docs.map(async doc => {
-                  try {
-                      const comment = doc.data();
-                      const postSnap = await doc.ref.parent.parent.get();
-                      return { ...comment, path: doc.ref.path, postTitle: postSnap.exists() ? postSnap.data().title : "Unknown Post" };
-                  } catch (e) { console.error("Error fetching parent post for comment:", e); return null; }
+          
+          // Show loading state
+          tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">Loading comments...</td></tr>`;
+          
+          // Use collectionGroup to query all comments across all posts
+          db.collectionGroup('comments').orderBy('createdAt', 'desc').get()
+              .then(async snapshot => {
+                  if (snapshot.empty) {
+                      tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No comments yet.</td></tr>`;
+                      return;
+                  }
+                  
+                  // Get post titles for each comment
+                  const commentsData = await Promise.all(
+                      snapshot.docs.map(async doc => {
+                          try {
+                              const comment = doc.data();
+                              const postId = doc.ref.parent.parent.id;
+                              const postDoc = await db.collection('posts').doc(postId).get();
+                              const postTitle = postDoc.exists ? postDoc.data().title : 'Unknown Post';
+                              
+                              return {
+                                  id: doc.id,
+                                  path: doc.ref.path,
+                                  text: comment.text || '',
+                                  name: comment.name || 'Anonymous',
+                                  createdAt: comment.createdAt,
+                                  postTitle: postTitle
+                              };
+                          } catch (error) {
+                              console.error('Error processing comment:', error);
+                              return null;
+                          }
+                      })
+                  );
+                  
+                  // Filter out any null results and render
+                  const validComments = commentsData.filter(comment => comment !== null);
+                  
+                  if (validComments.length === 0) {
+                      tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No valid comments found.</td></tr>`;
+                      return;
+                  }
+                  
+                  tableBody.innerHTML = validComments.map(comment => `
+                      <tr>
+                          <td class="p-3">${comment.text}</td>
+                          <td class="p-3">${comment.name}</td>
+                          <td class="p-3">${comment.postTitle}</td>
+                          <td class="p-3 text-right">
+                              <button onclick="openConfirmationModal('${comment.path}', 'comment')" class="btn btn-danger text-sm">Delete</button>
+                          </td>
+                      </tr>
+                  `).join('');
+              })
+              .catch(error => {
+                  console.error("Error loading comments:", error);
+                  tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading comments. Check console for details.</td></tr>`;
               });
-              let commentsData = (await Promise.all(commentsPromises)).filter(c => c);
-              commentsData.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-              tableBody.innerHTML = commentsData.map(c => `<tr><td class="p-3">${c.text}</td><td class="p-3">${c.name}</td><td class="p-3">${c.postTitle}</td><td class="p-3 text-right"><button onclick="openConfirmationModal('${c.path}', 'comment')" class="btn btn-danger text-sm">Delete</button></td></tr>`).join('');
-          }, error => { console.error("Error loading comments:", error); tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading comments. Please check console for details.</td></tr>`; });
       }
 
       // --- NOTES MANAGEMENT ---
@@ -193,28 +231,73 @@
           }, error => { console.error("Error loading notes:", error); document.getElementById('notes-table-body').innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-500">Error loading notes.</td></tr>`; });
       }
 
-      // --- TRANSACTION MANAGEMENT (DEFINITIVE FIX) ---
+      // --- TRANSACTION MANAGEMENT (FIXED) ---
       function loadTransactions() {
           const tableBody = document.getElementById('transactions-table-body');
-          db.collection('transactions').onSnapshot(async snapshot => {
-              const allTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-              const pendingTransactions = allTransactions.filter(tx => tx.status === 'pending');
-              if (pendingTransactions.length === 0) {
-                  tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending transactions.</td></tr>`;
-                  return;
-              }
-              const transactionData = await Promise.all(pendingTransactions.map(async tx => {
-                  const noteSnap = await db.collection('notes').doc(tx.noteId).get();
-                  return { ...tx, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
-              }));
-              transactionData.sort((a, b) => (a.submittedAt?.toDate() || 0) - (b.submittedAt?.toDate() || 0));
-              tableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction(this, '${tx.id}', '${tx.noteId}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction(this, '${tx.id}', null, 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
-          }, error => {
-              console.error("Error loading transactions:", error);
-              tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading transactions.</td></tr>`;
-          });
+          
+          // Show loading state
+          tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">Loading transactions...</td></tr>`;
+          
+          // Query transactions where status equals 'pending'
+          db.collection('transactions')
+              .where('status', '==', 'pending')
+              .orderBy('submittedAt', 'asc')
+              .get()
+              .then(async snapshot => {
+                  if (snapshot.empty) {
+                      tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending transactions.</td></tr>`;
+                      return;
+                  }
+                  
+                  // Get note titles for each transaction
+                  const transactionsData = await Promise.all(
+                      snapshot.docs.map(async doc => {
+                          try {
+                              const transaction = doc.data();
+                              const noteDoc = await db.collection('notes').doc(transaction.noteId).get();
+                              const noteTitle = noteDoc.exists ? noteDoc.data().title : 'Unknown Note';
+                              
+                              return {
+                                  id: doc.id,
+                                  noteId: transaction.noteId,
+                                  userEmail: transaction.userEmail || 'Unknown User',
+                                  trxId: transaction.trxId || 'N/A',
+                                  noteTitle: noteTitle,
+                                  submittedAt: transaction.submittedAt
+                              };
+                          } catch (error) {
+                              console.error('Error processing transaction:', error);
+                              return null;
+                          }
+                      })
+                  );
+                  
+                  // Filter out any null results and render
+                  const validTransactions = transactionsData.filter(tx => tx !== null);
+                  
+                  if (validTransactions.length === 0) {
+                      tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No valid pending transactions.</td></tr>`;
+                      return;
+                  }
+                  
+                  tableBody.innerHTML = validTransactions.map(tx => `
+                      <tr>
+                          <td class="p-3 font-medium">${tx.noteTitle}</td>
+                          <td class="p-3 text-slate-600">${tx.userEmail}</td>
+                          <td class="p-3 text-slate-800">${tx.trxId}</td>
+                          <td class="p-3 text-right space-x-2">
+                              <button onclick="handleTransaction(this, '${tx.id}', '${tx.noteId}', 'approved')" class="btn btn-success text-sm">Approve</button>
+                              <button onclick="handleTransaction(this, '${tx.id}', null, 'rejected')" class="btn btn-warning text-sm">Reject</button>
+                          </td>
+                      </tr>
+                  `).join('');
+              })
+              .catch(error => {
+                  console.error("Error loading transactions:", error);
+                  tableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading transactions. Check console for details.</td></tr>`;
+              });
       }
-
+      
       async function handleTransaction(button, transactionId, noteId, status) {
           button.disabled = true; const originalText = button.textContent; button.textContent = 'Processing...';
           if (!confirm(`Are you sure you want to ${status} this transaction?`)) { button.disabled = false; button.textContent = originalText; return; }
@@ -227,7 +310,13 @@
                   const linkTextarea = document.getElementById('access-link-textarea');
                   linkTextarea.value = accessLink;
                   linkContainer.classList.remove('hidden');
-              } else { await db.collection('transactions').doc(transactionId).update({ status: 'rejected', processedAt: firebase.firestore.FieldValue.serverTimestamp() }); }
+                  // Reload transactions to remove the processed one from the list
+                  loadTransactions();
+              } else { 
+                  await db.collection('transactions').doc(transactionId).update({ status: 'rejected', processedAt: firebase.firestore.FieldValue.serverTimestamp() }); 
+                  // Reload transactions to remove the processed one from the list
+                  loadTransactions();
+              }
           } catch (error) { console.error(`Error updating transaction:`, error); alert('An error occurred.'); button.disabled = false; button.textContent = originalText; }
       }
       document.getElementById('copy-link-button').addEventListener('click', () => { document.getElementById('access-link-textarea').select(); document.execCommand('copy'); });
@@ -240,8 +329,14 @@
       document.getElementById('modal-confirm').addEventListener('click', async () => {
           if (!itemToDelete.id) return;
           try {
-              if (itemToDelete.type === 'comment') { await db.doc(itemToDelete.id).delete(); }
-              else { await db.collection(`${itemToDelete.type}s`).doc(itemToDelete.id).delete(); }
+              if (itemToDelete.type === 'comment') { 
+                  await db.doc(itemToDelete.id).delete(); 
+                  // Reload comments after deletion
+                  loadComments();
+              }
+              else { 
+                  await db.collection(`${itemToDelete.type}s`).doc(itemToDelete.id).delete(); 
+              }
           } catch (error) { console.error("Error deleting item: ", error); }
           document.getElementById('modal-cancel').click();
       });
