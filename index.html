@@ -64,12 +64,8 @@
             <h3 id="modal-note-title" class="text-2xl font-bold mb-2"></h3>
             <p id="modal-note-price" class="text-xl font-semibold text-emerald-600 mb-4"></p>
             <p class="text-slate-600 mb-6">To get access, please choose one of the options below:</p>
-            
-            <div class="space-y-4">
-                <div class="border rounded-lg p-4"><h4 class="font-bold">Option 1: Pay with bKash</h4><p class="text-sm text-slate-500 mt-1">Send the amount to the bKash number below, then submit your email and the Transaction ID (TrxID).</p><p class="my-3 text-center bg-slate-100 p-2 rounded">bKash Send Money: <strong class="text-red-600">01xxxxxxxxx</strong></p><form id="bkash-form" class="space-y-3"><input id="user-email" type="email" class="w-full p-2 border rounded" placeholder="Your Email Address" required><input id="trx-id" type="text" class="w-full p-2 border rounded" placeholder="bKash Transaction ID (TrxID)" required><button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded hover:bg-emerald-700">Submit for Verification</button></form></div>
-                <div class="border rounded-lg p-4"><h4 class="font-bold">Option 2: Watch an Ad</h4><p class="text-sm text-slate-500 mt-1">Watch a short ad to get temporary access to this note.</p><button id="watch-ad-btn" class="mt-3 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Watch Ad for Access</button><p class="text-xs text-center mt-2 text-slate-400">Full Google AdSense integration would be required for this feature to work.</p></div>
-            </div>
-             <p id="modal-success-message" class="text-center mt-4 text-green-600 font-bold"></p>
+            <div class="space-y-4"><div class="border rounded-lg p-4"><h4 class="font-bold">Option 1: Pay with bKash</h4><p class="text-sm text-slate-500 mt-1">Send the amount to the bKash number below, then submit your email and the Transaction ID (TrxID).</p><p class="my-3 text-center bg-slate-100 p-2 rounded">bKash Send Money: <strong class="text-red-600">01xxxxxxxxx</strong></p><form id="bkash-form" class="space-y-3"><input id="user-email" type="email" class="w-full p-2 border rounded" placeholder="Your Email Address" required><input id="trx-id" type="text" class="w-full p-2 border rounded" placeholder="bKash Transaction ID (TrxID)" required><button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded hover:bg-emerald-700">Submit for Verification</button></form></div><div class="border rounded-lg p-4"><h4 class="font-bold">Option 2: Watch an Ad</h4><p class="text-sm text-slate-500 mt-1">Watch a short ad to get temporary access to this note.</p><button id="watch-ad-btn" class="mt-3 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">Watch Ad for Access</button><p class="text-xs text-center mt-2 text-slate-400">Full Google AdSense integration would be required for this feature to work.</p></div></div>
+            <p id="modal-success-message" class="text-center mt-4 text-green-600 font-bold"></p>
         </div>
     </div>
 
@@ -80,7 +76,6 @@
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // Mobile Menu
       const mobileMenuButton = document.getElementById('mobile-menu-button');
       const mobileMenu = document.getElementById('mobile-menu');
       mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
@@ -88,17 +83,17 @@
           link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
       });
       
-      // Dynamic Blog Post Loader
+      // --- DYNAMIC BLOG POST LOADER ---
+      const postsContainer = document.getElementById('blog-posts-container');
       function displayPosts(posts) {
-          const postsContainer = document.getElementById('blog-posts-container');
           postsContainer.innerHTML = '';
           if (posts.length === 0) { postsContainer.innerHTML = '<p class="col-span-full text-center text-slate-500">No articles published yet.</p>'; return; }
           posts.forEach(post => {
               const postElement = document.createElement('div');
               postElement.className = 'card-hover bg-white rounded-xl shadow-lg overflow-hidden flex flex-col';
-              const date = post.createdAt && post.createdAt.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not available';
+              const date = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Date not available';
               const imageUrl = post.imageUrl || `https://placehold.co/600x400/3B82F6/FFFFFF?text=Article`;
-              const snippet = post.content ? post.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : 'No content preview available.';
+              const snippet = post.content ? post.content.replace(/<[^>]+>/g, '').substring(0, 150) + '...' : '';
               const votedPosts = JSON.parse(localStorage.getItem('voted_posts')) || {};
               const hasVoted = votedPosts[post.id];
 
@@ -133,31 +128,25 @@
       db.collection('posts').orderBy('createdAt', 'desc').onSnapshot(querySnapshot => {
           const posts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           displayPosts(posts);
-      }, error => console.error("Error fetching posts:", error));
+      }, error => { console.error("Error fetching posts:", error); document.getElementById('loading-posts-message').textContent = 'Error: Could not load articles.'; });
 
-      // Dynamic Notes Loader
+      // --- DYNAMIC NOTES LOADER ---
       const notesContainer = document.getElementById('notes-container');
       db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-          const notesMessage = document.getElementById('loading-notes-message');
-          if(notesMessage) notesMessage.remove();
+          const loadingMsg = document.getElementById('loading-notes-message');
+          if (loadingMsg) loadingMsg.remove();
           notesContainer.innerHTML = '';
           if (snapshot.empty) { notesContainer.innerHTML = '<p class="col-span-full text-center">No notes available for sale yet.</p>'; return; }
           snapshot.forEach(doc => {
               const note = doc.data();
               const noteCard = document.createElement('div');
               noteCard.className = 'card-hover bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-lg overflow-hidden text-center p-8 flex flex-col';
-              noteCard.innerHTML = `
-                  <div class="text-blue-500 text-5xl mb-4"><i class="fas fa-file-alt"></i></div>
-                  <h3 class="text-2xl font-bold text-slate-800 mb-2">${note.title}</h3>
-                  <p class="text-slate-600 flex-grow mb-6">${note.description}</p>
-                  <div class="text-4xl font-extrabold text-slate-900 mb-6">৳${note.price}</div>
-                  <button data-note-id="${doc.id}" data-note-title="${note.title}" data-note-price="৳${note.price}" class="get-access-btn bg-blue-600 text-white font-bold py-3 px-6 rounded-lg w-full hover:bg-blue-700 transition">Get Access</button>
-              `;
+              noteCard.innerHTML = `<div class="text-blue-500 text-5xl mb-4"><i class="fas fa-file-alt"></i></div><h3 class="text-2xl font-bold text-slate-800 mb-2">${note.title}</h3><p class="text-slate-600 flex-grow mb-6">${note.description}</p><div class="text-4xl font-extrabold text-slate-900 mb-6">৳${note.price}</div><button data-note-id="${doc.id}" data-note-title="${note.title}" data-note-price="৳${note.price}" class="get-access-btn bg-blue-600 text-white font-bold py-3 px-6 rounded-lg w-full hover:bg-blue-700 transition">Get Access</button>`;
               notesContainer.appendChild(noteCard);
           });
       });
 
-      // Payment Modal Logic
+      // --- PAYMENT MODAL LOGIC ---
       const paymentModal = document.getElementById('payment-modal');
       const closeModalBtn = document.getElementById('close-modal-btn');
       const bKashForm = document.getElementById('bkash-form');
@@ -190,7 +179,7 @@
           alert("In a real app, a rewarded video ad from Google AdSense would play here. After completion, access would be granted.");
       });
 
-      // Newsletter Form Logic
+      // --- NEWSLETTER FORM LOGIC ---
       const newsletterForm = document.getElementById('newsletter-form');
       newsletterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
