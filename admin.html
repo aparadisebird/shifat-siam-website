@@ -202,7 +202,6 @@
       // --- TRANSACTION MANAGEMENT (FIXED) ---
       function loadTransactions() {
           const transactionsTableBody = document.getElementById('transactions-table-body');
-          // **THE FIX IS HERE** We removed the .orderBy() which required a special index.
           db.collection('transactions').where('status', '==', 'pending')
             .onSnapshot(async snapshot => {
               if (snapshot.empty) {
@@ -215,13 +214,12 @@
                   return { ...tx, id: doc.id, noteTitle: noteSnap.exists() ? noteSnap.data().title : 'Unknown Note' };
               }));
               
-              // We now sort the results here in the browser to ensure newest are first
               transactionData.sort((a, b) => (b.submittedAt?.toDate() || 0) - (a.submittedAt?.toDate() || 0));
 
               transactionsTableBody.innerHTML = transactionData.map(tx => `<tr><td class="p-3 font-medium">${tx.noteTitle}</td><td class="p-3 text-slate-600">${tx.userEmail}</td><td class="p-3 text-slate-800">${tx.trxId}</td><td class="p-3 text-right space-x-2"><button onclick="handleTransaction('${tx.id}', 'approved')" class="btn btn-success text-sm">Approve</button><button onclick="handleTransaction('${tx.id}', 'rejected')" class="btn btn-warning text-sm">Reject</button></td></tr>`).join('');
           }, error => {
               console.error("Error loading transactions:", error);
-              transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data. Please check Firebase rules and console for errors.</td></tr>`;
+              transactionsTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Error loading data. Please check console for details.</td></tr>`;
           });
       }
       async function handleTransaction(id, status) {
