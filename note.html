@@ -48,7 +48,7 @@
 
       function renderError(title, message) {
           statusContainer.style.display = 'block';
-          noteContainer.innerHTML = ''; // Clear any previous content
+          noteContainer.innerHTML = '';
           statusContainer.innerHTML = `
             <div class="max-w-md mx-auto bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
                 <p class="font-bold">${title}</p>
@@ -60,13 +60,10 @@
       function renderNote(note) {
           document.title = `${note.title} | Shifat S. Siam`;
           statusContainer.style.display = 'none';
-
-          // Ensure the GDoc link is in a viewable format
           let embedLink = note.gdocLink || '';
           if (embedLink.includes('/edit')) {
               embedLink = embedLink.replace('/edit', '/preview');
           }
-
           noteContainer.innerHTML = `
             <div class="prose bg-white p-8 md:p-12 rounded-lg shadow-lg">
                 <h1 class="font-black text-slate-900 !mb-4">${note.title}</h1>
@@ -84,34 +81,29 @@
           const accessToken = urlParams.get('token');
 
           if (!noteId || !accessToken) {
-              renderError('Access Denied', 'This access link is incomplete. Please check the link provided in your email.');
+              renderError('Access Denied', 'This access link is incomplete.');
               return;
           }
 
           try {
-              // **THE FIX IS HERE:**
-              // 1. We use a simple query that will always work, searching only for the unique token.
-              const txQuery = db.collection('transactions').where('accessToken', '==', accessToken);
+              // This query now works because you created the required index in Step 1.
+              const txQuery = db.collection('transactions')
+                                .where('accessToken', '==', accessToken)
+                                .where('status', '==', 'approved');
+              
               const txSnapshot = await txQuery.get();
 
               if (txSnapshot.empty) {
-                  renderError('Access Denied', 'This access token is invalid or has expired.');
+                  renderError('Access Denied', 'This access token is invalid, expired, or has not been approved.');
                   return;
               }
 
-              // 2. We now perform the security checks in the browser after getting the data.
               const transaction = txSnapshot.docs[0].data();
-              if (transaction.status !== 'approved') {
-                  renderError('Access Denied', 'This transaction has not been approved.');
-                  return;
-              }
-
               if (transaction.noteId !== noteId) {
                   renderError('Access Denied', 'This access token is not valid for this specific note.');
                   return;
               }
 
-              // 3. If all checks pass, we fetch and render the note.
               const noteDoc = await db.collection('notes').doc(noteId).get();
               if (noteDoc.exists) {
                   renderNote(noteDoc.data());
@@ -121,7 +113,7 @@
 
           } catch (error) {
               console.error("Critical Error loading note:", error);
-              renderError('An Error Occurred', 'We could not load the note at this time. Please try again later.');
+              renderError('An Error Occurred', 'Could not load the note. Please ensure the Firebase index has finished building.');
           }
       }
 
