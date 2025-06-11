@@ -20,7 +20,6 @@
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased">
 
-    <!-- Header -->
     <header class="bg-white/90 backdrop-blur-lg shadow-sm sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="#" class="text-2xl font-extrabold text-slate-900 tracking-tight">Shifat S. Siam</a>
@@ -83,7 +82,6 @@
           link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
       });
       
-      // --- DYNAMIC BLOG POST LOADER ---
       const postsContainer = document.getElementById('blog-posts-container');
       function displayPosts(posts) {
           postsContainer.innerHTML = '';
@@ -130,7 +128,6 @@
           displayPosts(posts);
       }, error => { console.error("Error fetching posts:", error); document.getElementById('loading-posts-message').textContent = 'Error: Could not load articles.'; });
 
-      // --- DYNAMIC NOTES LOADER ---
       const notesContainer = document.getElementById('notes-container');
       db.collection('notes').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
           const loadingMsg = document.getElementById('loading-notes-message');
@@ -146,7 +143,6 @@
           });
       });
 
-      // --- PAYMENT MODAL LOGIC ---
       const paymentModal = document.getElementById('payment-modal');
       const closeModalBtn = document.getElementById('close-modal-btn');
       const bKashForm = document.getElementById('bkash-form');
@@ -179,7 +175,6 @@
           alert("In a real app, a rewarded video ad from Google AdSense would play here. After completion, access would be granted.");
       });
 
-      // --- NEWSLETTER FORM LOGIC ---
       const newsletterForm = document.getElementById('newsletter-form');
       newsletterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
